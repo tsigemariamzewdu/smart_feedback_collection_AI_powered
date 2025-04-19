@@ -104,56 +104,96 @@ const Menu = () => {
 
   const placeOrder = async () => {
     if (!isAuthenticated) {
-      toast.error("Please login to place an order")
-      navigate("/login")
-      return
+      toast.error("Please login to place an order");
+      navigate("/login");
+      return;
     }
-
+  
     if (cart.length === 0) {
-      toast.error("Your cart is empty")
-      return
+      toast.error("Your cart is empty");
+      return;
     }
-
-    setIsPlacingOrder(true)
-
+  
+    setIsPlacingOrder(true);
+  
     try {
+      // Prepare order data
       const orderData = {
         items: cart.map((item) => ({
           menuItem: item._id,
           quantity: item.quantity,
           price: item.price,
-          removedIngredients: item.removedIngredients,
-          specialRequest: item.specialRequest
+          removedIngredients: item.removedIngredients || [],
+          specialRequest: item.specialRequest || ""
         })),
         totalAmount: calculateTotal(),
-      }
-
-      const token = localStorage.getItem('token')
+      };
+  
+      const token = localStorage.getItem('token');
       const response = await api.post("/orders", orderData, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
-        },
-        withCredentials: true
-      })
-
-      toast.success("Order placed successfully!")
-      setCart([])
-      navigate(`/orders/${response.data.orderId}`)
-    } catch (error) {
-      console.error("Error placing order:", error)
-      
-      if (error.response?.status === 401) {
-        toast.error("Session expired. Please login again")
-        localStorage.removeItem('token')
-        navigate("/login")
+        }
+      });
+  
+      if (response.data.success) {
+        toast.success("Order placed successfully!");
+        setCart([]);
+        navigate(`/orders/${response.data.orderId}`);
       } else {
-        toast.error(error.response?.data?.message || "Failed to place order")
+        throw new Error(response.data.message || "Failed to place order");
+      }
+    } catch (error) {
+      console.error("Error placing order:", error);
+      
+      // Handle specific error cases
+      if (error.response) {
+        const { status, data } = error.response;
+        
+        if (status === 400) {
+          // Handle validation errors
+          if (data.message.includes("unavailable")) {
+            // Item unavailable - suggest removing from cart
+            toast.error(
+              <div>
+                <p>{data.message}</p>
+                <button 
+                  onClick={() => {
+                    // Find and remove unavailable item
+                    const itemName = data.message.split("'")[1];
+                    const newCart = cart.filter(item => item.name !== itemName);
+                    setCart(newCart);
+                  }}
+                  className="mt-2 text-sm underline"
+                >
+                  Remove unavailable items
+                </button>
+              </div>,
+              { duration: 5000 }
+            );
+          } else {
+            toast.error(data.message || "Invalid order data");
+          }
+        } else if (status === 401) {
+          toast.error("Session expired. Please login again");
+          localStorage.removeItem('token');
+          navigate("/login");
+        } else if (status === 404) {
+          toast.error("Menu item not found - please refresh the menu");
+          // Optionally refresh the menu
+          const menuResponse = await api.get("/menu");
+          setMenuItems(menuResponse.data);
+        } else {
+          toast.error(data.message || "Failed to place order");
+        }
+      } else {
+        toast.error(error.message || "Failed to place order");
       }
     } finally {
-      setIsPlacingOrder(false)
+      setIsPlacingOrder(false);
     }
-  }
+  };
 
   const toggleIngredient = (ingredient) => {
     setRemovedIngredients(prev =>
@@ -298,16 +338,19 @@ const Menu = () => {
                   >
                     Add
                   </button>
-                  <button
-                    onClick={() => {
-                      setCustomizingItem(item)
-                      setRemovedIngredients([])
-                      setSpecialRequest("")
-                    }}
-                    className="bg-blue-600 text-white px-3 py-1 rounded-md hover:bg-blue-700 transition-colors"
-                  >
-                    Customize
-                  </button>
+                    <button
+                      onClick={() => {
+                        setCustomizingItem(item)
+                        setRemovedIngredients([])
+                        setSpecialRequest("")
+                      }}
+                      className="flex items-center gap-1 bg-blue-100 text-blue-700 px-3 py-1 rounded-md hover:bg-blue-200 transition-colors"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                      </svg>
+                      Customize
+                    </button>
                 </div>
               </div>
             </div>
