@@ -5,6 +5,8 @@ import { useNavigate } from "react-router-dom"
 import api from "../services/api"
 import { useAuth } from "../context/AuthContext"
 import toast from "react-hot-toast"
+const { user } = useAuth(); // Assuming your useAuth provides user info
+const userId = user._id; // Add this at the top of your component
 
 const Menu = () => {
   const [menuItems, setMenuItems] = useState([])
@@ -25,6 +27,7 @@ const Menu = () => {
       try {
         const response = await api.get("/menu")
         setMenuItems(response.data)
+        console.log(response.data)
 
         // Extract unique categories
         const uniqueCategories = [...new Set(response.data.map((item) => item.category))]
@@ -119,14 +122,15 @@ const Menu = () => {
     try {
       // Prepare order data
       const orderData = {
+        user: userId,
         items: cart.map((item) => ({
           menuItem: item._id,
           quantity: item.quantity,
-          price: item.price,
+          priceAtOrder: item.price,
           removedIngredients: item.removedIngredients || [],
           specialRequest: item.specialRequest || ""
         })),
-        totalAmount: calculateTotal(),
+        total: calculateTotal(),
       };
   
       const token = localStorage.getItem('token');
@@ -146,50 +150,7 @@ const Menu = () => {
       }
     } catch (error) {
       console.error("Error placing order:", error);
-      
-      // Handle specific error cases
-      if (error.response) {
-        const { status, data } = error.response;
-        
-        if (status === 400) {
-          // Handle validation errors
-          if (data.message.includes("unavailable")) {
-            // Item unavailable - suggest removing from cart
-            toast.error(
-              <div>
-                <p>{data.message}</p>
-                <button 
-                  onClick={() => {
-                    // Find and remove unavailable item
-                    const itemName = data.message.split("'")[1];
-                    const newCart = cart.filter(item => item.name !== itemName);
-                    setCart(newCart);
-                  }}
-                  className="mt-2 text-sm underline"
-                >
-                  Remove unavailable items
-                </button>
-              </div>,
-              { duration: 5000 }
-            );
-          } else {
-            toast.error(data.message || "Invalid order data");
-          }
-        } else if (status === 401) {
-          toast.error("Session expired. Please login again");
-          localStorage.removeItem('token');
-          navigate("/login");
-        } else if (status === 404) {
-          toast.error("Menu item not found - please refresh the menu");
-          // Optionally refresh the menu
-          const menuResponse = await api.get("/menu");
-          setMenuItems(menuResponse.data);
-        } else {
-          toast.error(data.message || "Failed to place order");
-        }
-      } else {
-        toast.error(error.message || "Failed to place order");
-      }
+      toast.error(error.message || "Failed to place order");
     } finally {
       setIsPlacingOrder(false);
     }

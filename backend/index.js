@@ -19,9 +19,11 @@ app.use(express.json());
 app.use(cookieParser());
 
 // Database connection
-mongoose.connect(process.env.MONGODB_URI, {
+mongoose.connect('mongodb://localhost:27017/foodfeedback', {
   useNewUrlParser: true,
-  useUnifiedTopology: true
+  useUnifiedTopology: true,
+  // Add this line to disable transactions
+  retryWrites: false
 })
 .then(() => console.log('Connected to MongoDB'))
 .catch(err => console.error('MongoDB connection error:', err));
