@@ -9,6 +9,7 @@ import ChefDashboard from "./pages/ChefDashboard"
 import Login from "./pages/Login"
 import Register from "./pages/Register"
 import { AuthProvider } from "./context/AuthContext"
+import AdminDashboard from "./pages/AdminDashboard"
 
 function App() {
   return (
@@ -23,6 +24,7 @@ function App() {
             <Route path="/orders" element={<OrderHistory />} />
             <Route path="/feedback/:orderId" element={<FeedbackForm />} />
             <Route path="/chef-dashboard" element={<ChefDashboard />} />
+            <Route path="/admin" element={<AdminDashboard/>}/>
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
           </Routes>

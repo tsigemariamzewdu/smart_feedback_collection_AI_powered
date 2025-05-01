@@ -2,6 +2,7 @@ const express = require('express');
 const jwt = require('jsonwebtoken');
 const User = require('../models/user');
 const router = express.Router();
+const bcrypt = require("bcryptjs")
 
 // Token configuration
 const TOKEN_EXPIRATION = '7d';
@@ -110,27 +111,36 @@ router.post('/register', async (req, res) => {
 router.post('/login', async (req, res) => {
   try {
     const { email, password } = req.body;
+    console.log('Login attempt for:', email); // Debug log
 
     // Validate input
     if (!email || !password) {
+      console.log('Missing credentials');
       return res.status(400).json({ 
         success: false,
         message: 'Please provide both email and password' 
       });
     }
 
-    // Find user with password field included
-    const user = await User.findOne({ email: email.toLowerCase().trim() }).select('+password');
-    
+    // Find user with password
+    const user = await User.findOne({ email: email.toLowerCase().trim() })
+      .select('+password')
+      .lean(); // Add lean() for better performance
+
     if (!user) {
+      console.log('User not found in database');
       return res.status(401).json({ 
         success: false,
         message: 'Invalid credentials' 
       });
     }
 
+    console.log('User found:', user.email); // Debug log
+
     // Compare passwords
-    const isMatch = await user.comparePassword(password);
+    const isMatch = await bcrypt.compare(password, user.password);
+    console.log('Password comparison result:', isMatch); // Debug log
+
     if (!isMatch) {
       return res.status(401).json({ 
         success: false,
@@ -140,10 +150,15 @@ router.post('/login', async (req, res) => {
 
     // Create token
     const token = jwt.sign(
-      { userId: user._id, role: user.role },
+      { 
+        userId: user._id.toString(),
+        role: user.role 
+      },
       process.env.JWT_SECRET,
       { expiresIn: TOKEN_EXPIRATION }
     );
+
+    console.log('Token generated successfully'); // Debug log
 
     // Set secure HTTP-only cookie
     res.cookie('token', token, {
@@ -153,11 +168,13 @@ router.post('/login', async (req, res) => {
       sameSite: 'strict'
     });
 
-    // Respond with user data (without sensitive info)
+    // Respond with sanitized user data
+    const userData = sanitizeUser(user);
+    
     res.json({
       success: true,
-      user: sanitizeUser(user),
-      token, // Also send token in response for clients that can't use cookies
+      user: userData,
+      token, // For clients that can't use cookies
       expiresIn: TOKEN_EXPIRATION
     });
 
@@ -170,7 +187,6 @@ router.post('/login', async (req, res) => {
     });
   }
 });
-
 // Check session
 router.get('/check-session', async (req, res) => {
   try {

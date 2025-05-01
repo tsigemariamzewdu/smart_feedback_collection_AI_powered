@@ -8,6 +8,10 @@ const UserSchema = new mongoose.Schema({
     trim: true,
     maxlength: [50, 'Name cannot exceed 50 characters']
   },
+  isChef: {
+    type: Boolean,
+    default: false
+  },
   username: {
     type: String,
     unique: true,
