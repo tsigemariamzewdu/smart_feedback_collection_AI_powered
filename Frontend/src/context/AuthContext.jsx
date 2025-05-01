@@ -42,7 +42,10 @@ export const AuthProvider = ({ children }) => {
       api.defaults.headers.common["Authorization"] = `Bearer ${token}`
       setUser(user)
 
-      return { success: true }
+      return {
+        success: true,
+        role: user.role, // Return role for redirection
+      }
     } catch (error) {
       return {
         success: false,
@@ -51,20 +54,57 @@ export const AuthProvider = ({ children }) => {
     }
   }
 
-  const register = async (userData) => {
+// In the register function, update to send phone:
+const register = async (userData) => {
+  try {
+    // Force role to customer and include phone
+    const userDataWithRole = {
+      ...userData,
+      role: "customer",
+      phone: userData.phone || "" // Ensure phone is included
+    };
+
+    const response = await api.post("/auth/register", userDataWithRole);
+    const { token, user } = response.data;
+
+    localStorage.setItem("token", token);
+    api.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+    setUser(user);
+
+    return { success: true };
+  } catch (error) {
+    return {
+      success: false,
+      message: error.response?.data?.message || "Registration failed",
+    };
+  }
+};
+
+  const addChef = async (chefData) => {
     try {
-      const response = await api.post("/auth/register", userData)
-      const { token, user } = response.data
+      // Only admin can add chefs
+      if (user?.role !== "admin") {
+        return {
+          success: false,
+          message: "Unauthorized: Only admins can add chefs",
+        }
+      }
 
-      localStorage.setItem("token", token)
-      api.defaults.headers.common["Authorization"] = `Bearer ${token}`
-      setUser(user)
+      const chefDataWithRole = {
+        ...chefData,
+        role: "chef",
+      }
 
-      return { success: true }
+      const response = await api.post("/users", chefDataWithRole)
+
+      return {
+        success: true,
+        chef: response.data,
+      }
     } catch (error) {
       return {
         success: false,
-        message: error.response?.data?.message || "Registration failed",
+        message: error.response?.data?.message || "Failed to add chef",
       }
     }
   }
@@ -80,9 +120,12 @@ export const AuthProvider = ({ children }) => {
     loading,
     login,
     register,
+    addChef,
     logout,
     isAuthenticated: !!user,
+    isCustomer: user?.role === "customer",
     isChef: user?.role === "chef",
+    isAdmin: user?.role === "admin",
   }
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

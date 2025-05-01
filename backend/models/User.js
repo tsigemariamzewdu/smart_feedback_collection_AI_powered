@@ -8,6 +8,12 @@ const UserSchema = new mongoose.Schema({
     trim: true,
     maxlength: [50, 'Name cannot exceed 50 characters']
   },
+  username: {
+    type: String,
+    unique: true,
+    trim: true,
+    sparse: true // Allows multiple null values if you don't want to require username
+  },
   email: {
     type: String,
     required: [true, 'Please provide an email'],
@@ -24,6 +30,10 @@ const UserSchema = new mongoose.Schema({
     required: [true, 'Please provide a password'],
     minlength: [6, 'Password must be at least 6 characters'],
     select: false // Never return password in queries
+  },
+  phone: {  // Added phone field to match frontend
+    type: String,
+    trim: true
   },
   role: {
     type: String,
@@ -78,4 +88,4 @@ UserSchema.set('toJSON', {
   }
 });
 
-module.exports = mongoose.model('User', UserSchema);
+module.exports = mongoose.model('user', UserSchema);

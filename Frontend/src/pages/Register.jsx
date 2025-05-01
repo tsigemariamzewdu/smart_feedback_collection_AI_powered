@@ -11,7 +11,7 @@ const Register = () => {
     email: "",
     password: "",
     confirmPassword: "",
-    role: "customer", // Default role
+    phone: "",
   })
   const [isLoading, setIsLoading] = useState(false)
 
@@ -28,21 +28,23 @@ const Register = () => {
   const handleSubmit = async (e) => {
     e.preventDefault()
 
+    // Validate passwords match
     if (formData.password !== formData.confirmPassword) {
-      toast.error("Passwords do not match")
+      toast.error("Passwords don't match")
       return
     }
 
     setIsLoading(true)
 
-    const { name, email, password, role } = formData
-    const result = await register({ name, email, password, role })
+    // Remove confirmPassword before sending to API
+    const { confirmPassword, ...userData } = formData
 
+    const result = await register(userData)
     setIsLoading(false)
 
     if (result.success) {
       toast.success("Registration successful!")
-      navigate("/menu")
+      navigate("/menu") // Customers are redirected to menu
     } else {
       toast.error(result.message)
     }
@@ -50,7 +52,7 @@ const Register = () => {
 
   return (
     <div className="max-w-md mx-auto">
-      <h1 className="text-2xl font-bold text-center mb-6">Create an Account</h1>
+      <h1 className="text-2xl font-bold text-center mb-6">Create Customer Account</h1>
 
       <form onSubmit={handleSubmit} className="bg-white p-6 rounded-lg shadow-md">
         <div className="mb-4">
@@ -84,6 +86,21 @@ const Register = () => {
         </div>
 
         <div className="mb-4">
+          <label htmlFor="phone" className="block text-gray-700 mb-2">
+            Phone Number
+          </label>
+          <input
+            type="tel"
+            id="phone"
+            name="phone"
+            value={formData.phone}
+            onChange={handleChange}
+            required
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+          />
+        </div>
+
+        <div className="mb-4">
           <label htmlFor="password" className="block text-gray-700 mb-2">
             Password
           </label>
@@ -94,12 +111,12 @@ const Register = () => {
             value={formData.password}
             onChange={handleChange}
             required
-            minLength={6}
+            minLength="8"
             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
           />
         </div>
 
-        <div className="mb-4">
+        <div className="mb-6">
           <label htmlFor="confirmPassword" className="block text-gray-700 mb-2">
             Confirm Password
           </label>
@@ -110,25 +127,9 @@ const Register = () => {
             value={formData.confirmPassword}
             onChange={handleChange}
             required
-            minLength={6}
+            minLength="8"
             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
           />
-        </div>
-
-        <div className="mb-6">
-          <label htmlFor="role" className="block text-gray-700 mb-2">
-            I am a:
-          </label>
-          <select
-            id="role"
-            name="role"
-            value={formData.role}
-            onChange={handleChange}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
-          >
-            <option value="customer">Customer</option>
-            <option value="chef">Chef</option>
-          </select>
         </div>
 
         <button

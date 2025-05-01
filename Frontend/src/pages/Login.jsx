@@ -33,7 +33,20 @@ const Login = () => {
 
     if (result.success) {
       toast.success("Login successful!")
-      navigate("/menu")
+      
+      // Redirect based on role
+      switch (result.role) {
+        case 'admin':
+          navigate("/admin")
+          break
+        case 'chef':
+          navigate("/chef")
+          break
+        case 'customer':
+        default:
+          navigate("/menu")
+          break
+      }
     } else {
       toast.error(result.message)
     }

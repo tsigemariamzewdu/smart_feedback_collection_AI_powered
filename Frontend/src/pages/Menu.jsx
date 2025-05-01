@@ -5,8 +5,8 @@ import { useNavigate } from "react-router-dom"
 import api from "../services/api"
 import { useAuth } from "../context/AuthContext"
 import toast from "react-hot-toast"
-const { user } = useAuth(); // Assuming your useAuth provides user info
-const userId = user._id; // Add this at the top of your component
+// const { user } = useAuth(); // Assuming your useAuth provides user info
+// const userId = user._id; // Add this at the top of your component
 
 const Menu = () => {
   const [menuItems, setMenuItems] = useState([])
@@ -122,7 +122,7 @@ const Menu = () => {
     try {
       // Prepare order data
       const orderData = {
-        user: userId,
+        // user: userId,
         items: cart.map((item) => ({
           menuItem: item._id,
           quantity: item.quantity,

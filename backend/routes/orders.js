@@ -8,20 +8,39 @@ const mongoose=require("mongoose")
 
 // Create new order (protected route)
 // Remove any transaction/session code like this:
-router.post('/',checkAuth, async (req, res) => {
+router.post('/', checkAuth, async (req, res) => {
   try {
-    // Remove any session/transaction code
-    const order = new Order(req.body);
-    await order.save(); // Simple save without transactions
+    // Add user from auth token if not provided
+    if (!req.body.user) {
+      req.body.user = req.userId; // Assuming checkAuth sets req.userId
+    }
+
+    const order = new Order({
+      ...req.body,
+      status: 'pending' // Ensure default status
+    });
+
+    await order.save();
     
     res.status(201).json({
       success: true,
       orderId: order._id
     });
   } catch (error) {
+    console.error('Order creation error:', error);
+    
+    // More detailed error response
+    const errors = {};
+    if (error.errors) {
+      Object.keys(error.errors).forEach(key => {
+        errors[key] = error.errors[key].message;
+      });
+    }
+    
     res.status(400).json({
       success: false,
-      message: error.message
+      message: 'Validation failed',
+      errors: errors
     });
   }
 });

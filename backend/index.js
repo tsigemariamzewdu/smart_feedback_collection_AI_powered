@@ -19,15 +19,9 @@ app.use(express.json());
 app.use(cookieParser());
 
 // Database connection
-mongoose.connect('mongodb://localhost:27017/foodfeedback', {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-  // Add this line to disable transactions
-  retryWrites: false
-})
-.then(() => console.log('Connected to MongoDB'))
-.catch(err => console.error('MongoDB connection error:', err));
-
+mongoose.connect('mongodb://127.0.0.1:27017/foodfeedback')
+  .then(() => console.log('MongoDB connected'))
+  .catch(err => console.log('Connection error:', err));
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/menu', menuRoutes);
