@@ -47,10 +47,20 @@ const ChefDashboard = () => {
 
   const updateOrderStatus = async (orderId, newStatus) => {
     try {
+      // Map frontend status to backend status
+      const statusMap = {
+        'pending': 'pending',
+        'preparing': 'processing',
+        'ready': 'processing', // 'ready' is a frontend concept, backend uses 'processing'
+        'completed': 'completed'
+      };
+
+      const backendStatus = statusMap[newStatus] || newStatus;
+
       const token = localStorage.getItem('token');
-      await api.patch(
+      const response = await api.patch(
         `/orders/${orderId}/status`,
-        { status: newStatus },
+        { status: backendStatus },
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -58,9 +68,11 @@ const ChefDashboard = () => {
         }
       );
 
+      // Update the local state with the response from server
       setOrders(orders.map(order => 
-        order._id === orderId ? { ...order, status: newStatus } : order
+        order._id === orderId ? response.data : order
       ));
+      
       toast.success(`Order status updated to ${newStatus}`);
     } catch (error) {
       console.error('Error updating order status:', error);
@@ -70,8 +82,13 @@ const ChefDashboard = () => {
 
   const filteredOrders = orders.filter(order => {
     if (activeTab === 'pending') return order.status === 'pending';
-    if (activeTab === 'preparing') return order.status === 'preparing';
-    if (activeTab === 'ready') return order.status === 'ready';
+    if (activeTab === 'preparing') return order.status === 'processing';
+    if (activeTab === 'ready') {
+      // For the 'ready' tab, we might want to show orders that are marked as 'processing'
+      // but are actually ready to be served. You might need to add a 'readyForPickup' field
+      // to your Order model if you want to distinguish between preparing and ready.
+      return order.status === 'processing';
+    }
     return true;
   });
 
@@ -149,13 +166,16 @@ const ChefDashboard = () => {
                     {order.tableNumber ? `Table ${order.tableNumber}` : 'Takeout'}
                   </p>
                   <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium mt-1 ${
-                    order.status === 'ready' 
+                    order.status === 'completed' 
                       ? 'bg-green-100 text-green-800'
                       : order.status === 'cancelled'
                       ? 'bg-red-100 text-red-800'
+                      : order.status === 'processing'
+                      ? 'bg-orange-100 text-orange-800'
                       : 'bg-yellow-100 text-yellow-800'
                   }`}>
-                    {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
+                    {order.status === 'processing' ? 'Preparing' : 
+                     order.status.charAt(0).toUpperCase() + order.status.slice(1)}
                   </span>
                 </div>
               </div>
@@ -220,28 +240,22 @@ const ChefDashboard = () => {
                 <button
                   onClick={() => updateOrderStatus(order._id, 'preparing')}
                   className={`px-3 py-1 text-sm rounded-md ${
-                    order.status === 'preparing'
+                    order.status === 'processing'
                       ? 'bg-blue-600 text-white'
                       : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
                   }`}
-                  disabled={order.status === 'preparing'}
+                  disabled={order.status === 'processing'}
                 >
                   Set Preparing
                 </button>
                 <button
-                  onClick={() => updateOrderStatus(order._id, 'ready')}
+                  onClick={() => updateOrderStatus(order._id, 'completed')}
                   className={`px-3 py-1 text-sm rounded-md ${
-                    order.status === 'ready'
+                    order.status === 'completed'
                       ? 'bg-blue-600 text-white'
                       : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
                   }`}
-                  disabled={order.status === 'ready'}
-                >
-                  Set Ready
-                </button>
-                <button
-                  onClick={() => updateOrderStatus(order._id, 'completed')}
-                  className="px-3 py-1 text-sm bg-green-600 text-white rounded-md hover:bg-green-700"
+                  disabled={order.status === 'completed'}
                 >
                   Complete Order
                 </button>

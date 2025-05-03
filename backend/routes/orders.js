@@ -10,38 +10,72 @@ const mongoose=require("mongoose")
 // Remove any transaction/session code like this:
 router.post('/', checkAuth, async (req, res) => {
   try {
-    // Add user from auth token if not provided
-    if (!req.body.user) {
-      req.body.user = req.userId; // Assuming checkAuth sets req.userId
-    }
+    const { orderId, items } = req.body;
+    const userId = req.userId;
 
-    const order = new Order({
-      ...req.body,
-      status: 'pending' // Ensure default status
+    // Validate items array exists and has ratings
+    // if (!items || !Array.isArray(items) {
+    //   return res.status(400).json({ message: 'Items array is required' });
+    // }
+
+    // Check order exists and belongs to user
+    const order = await Order.findOne({
+      _id: orderId,
+      user: userId,
+      status: 'completed'
     });
 
+    if (!order) {
+      return res.status(404).json({ message: 'Order not found or not eligible for feedback' });
+    }
+
+    if (order.feedback) {
+      return res.status(400).json({ message: 'Feedback already submitted' });
+    }
+
+    // Calculate average rating
+    const averageRating = items.reduce((sum, item) => sum + item.rating, 0) / items.length;
+
+    // Create feedback with calculated average
+    const feedback = new Feedback({
+      user: userId,
+      order: orderId,
+      items: items.map(item => ({
+        menuItem: item.menuItemId,
+        rating: item.rating,
+        comment: item.comment || "" // Ensure comment exists even if empty
+      })),
+      averageRating: parseFloat(averageRating.toFixed(2)) // Store with 2 decimal places
+    });
+
+    await feedback.save();
+
+    // Link feedback to order
+    order.feedback = feedback._id;
     await order.save();
-    
-    res.status(201).json({
-      success: true,
-      orderId: order._id
-    });
-  } catch (error) {
-    console.error('Order creation error:', error);
-    
-    // More detailed error response
-    const errors = {};
-    if (error.errors) {
-      Object.keys(error.errors).forEach(key => {
-        errors[key] = error.errors[key].message;
-      });
+
+    res.status(201).json(feedback);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+router.patch('/:id/status',checkAuth, async (req, res) => {
+  try {
+    const { status } = req.body;
+    const order = await Order.findByIdAndUpdate(
+      req.params.id,
+      { status },
+      { new: true }
+    ).populate('user', 'name email');
+
+    if (!order) {
+      return res.status(404).send({ error: 'Order not found' });
     }
-    
-    res.status(400).json({
-      success: false,
-      message: 'Validation failed',
-      errors: errors
-    });
+
+    res.send(order);
+  } catch (error) {
+    res.status(400).send({ error: error.message });
   }
 });
 

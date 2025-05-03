@@ -11,15 +11,26 @@ const FeedbackSchema = new mongoose.Schema({
     ref: 'Order',
     required: true
   },
-  rating: {
+  items: [{
+    menuItem: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'MenuItem',
+      required: true
+    },
+    rating: {
+      type: Number,
+      required: true,
+      min: 1,
+      max: 5
+    },
+    comment: {
+      type: String,
+      default: ""
+    }
+  }],
+  averageRating: {
     type: Number,
-    required: true,
-    min: 1,
-    max: 5
-  },
-  comment: {
-    type: String,
-    required: true
+    required: false
   },
   createdAt: {
     type: Date,
