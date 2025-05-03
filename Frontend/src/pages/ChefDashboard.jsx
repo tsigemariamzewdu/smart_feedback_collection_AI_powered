@@ -13,20 +13,19 @@ const ChefDashboard = () => {
 
   useEffect(() => {
     const fetchOrders = async () => {
-      // if (!isAuthenticated || user?.role !== 'chef') {
-      //   navigate('/');
-      //   return;
-      // }
+      if (!isAuthenticated || user?.role !== 'chef') {
+        navigate('/');
+        return;
+      }
 
-      // setIsLoading(true);
+      setIsLoading(true);
       try {
         const token = localStorage.getItem('token');
-        const response = await api.get('/orders/kitchen', {
+        const response = await api.get('/orders/all-orders', {
           headers: {
             Authorization: `Bearer ${token}`,
           },
         });
-
         setOrders(response.data);
       } catch (error) {
         console.error('Error fetching orders:', error);
@@ -42,10 +41,7 @@ const ChefDashboard = () => {
     };
 
     fetchOrders();
-
-    // Set up WebSocket or polling for real-time updates
-    const interval = setInterval(fetchOrders, 30000); // Poll every 30 seconds
-
+    const interval = setInterval(fetchOrders, 30000);
     return () => clearInterval(interval);
   }, [isAuthenticated, navigate, user]);
 
@@ -65,7 +61,6 @@ const ChefDashboard = () => {
       setOrders(orders.map(order => 
         order._id === orderId ? { ...order, status: newStatus } : order
       ));
-      
       toast.success(`Order status updated to ${newStatus}`);
     } catch (error) {
       console.error('Error updating order status:', error);
@@ -93,35 +88,31 @@ const ChefDashboard = () => {
   }
 
   return (
-    <div className="max-w-6xl mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-6">Chef Dashboard</h1>
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold text-gray-900">Chef Dashboard</h1>
+        <p className="mt-2 text-sm text-gray-600">
+          Manage and update order statuses
+        </p>
+      </div>
       
       {/* Status Tabs */}
-      <div className="flex border-b mb-6">
-        <button
-          onClick={() => setActiveTab('pending')}
-          className={`px-4 py-2 font-medium ${activeTab === 'pending' ? 'border-b-2 border-blue-500 text-blue-600' : 'text-gray-500'}`}
-        >
-          Pending
-        </button>
-        <button
-          onClick={() => setActiveTab('preparing')}
-          className={`px-4 py-2 font-medium ${activeTab === 'preparing' ? 'border-b-2 border-blue-500 text-blue-600' : 'text-gray-500'}`}
-        >
-          Preparing
-        </button>
-        <button
-          onClick={() => setActiveTab('ready')}
-          className={`px-4 py-2 font-medium ${activeTab === 'ready' ? 'border-b-2 border-blue-500 text-blue-600' : 'text-gray-500'}`}
-        >
-          Ready for Pickup
-        </button>
-        <button
-          onClick={() => setActiveTab('all')}
-          className={`px-4 py-2 font-medium ${activeTab === 'all' ? 'border-b-2 border-blue-500 text-blue-600' : 'text-gray-500'}`}
-        >
-          All Orders
-        </button>
+      <div className="flex space-x-4 mb-8 overflow-x-auto pb-2">
+        {['pending', 'preparing', 'ready', 'all'].map((tab) => (
+          <button
+            key={tab}
+            onClick={() => setActiveTab(tab)}
+            className={`px-4 py-2 text-sm font-medium rounded-md whitespace-nowrap ${
+              activeTab === tab
+                ? 'bg-blue-600 text-white'
+                : 'text-gray-700 hover:bg-gray-100'
+            }`}
+          >
+            {tab === 'all' ? 'All Orders' : 
+             tab === 'pending' ? 'Pending' :
+             tab === 'preparing' ? 'Preparing' : 'Ready'}
+          </button>
+        ))}
       </div>
 
       {/* Orders Grid */}
@@ -130,121 +121,129 @@ const ChefDashboard = () => {
           <p className="text-gray-600">No {activeTab} orders found.</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="space-y-6">
           {filteredOrders.map((order) => (
-            <div key={order._id} className="bg-white rounded-lg shadow overflow-hidden">
+            <div key={order._id} className="bg-white rounded-lg shadow divide-y">
               {/* Order Header */}
-              <div className="p-4 border-b bg-gray-50">
-                <div className="flex justify-between items-center">
-                  <div>
-                    <h2 className="font-semibold text-lg">
-                      Order #{order._id.slice(-6).toUpperCase()}
-                    </h2>
+              <div className="p-4 flex justify-between items-start sm:items-center">
+                <div>
+                  <h2 className="font-semibold text-lg">
+                    Order #{order._id.slice(-6).toUpperCase()}
+                  </h2>
+                  <div className="flex items-center mt-1 space-x-4">
                     <p className="text-sm text-gray-500">
-                      {new Date(order.createdAt).toLocaleDateString('en-US', {
-                        year: 'numeric',
-                        month: 'long',
-                        day: 'numeric',
-                        hour: '2-digit',
-                        minute: '2-digit',
-                      })}
+                      {new Date(order.createdAt).toLocaleString()}
                     </p>
+                    <p className="text-sm font-medium">
+                      {order.user?.name || 'Guest'}
+                    </p>
+                    {order.user?.specialMessage && (
+                      <span className="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full">
+                        Special Request
+                      </span>
+                    )}
                   </div>
-                  <div className="text-right">
-                    <p className="font-semibold">Table: {order.tableNumber || 'Takeout'}</p>
-                    <span className={`px-2 py-1 text-xs rounded-full ${
-                      order.status === 'ready' 
-                        ? 'bg-green-100 text-green-800'
-                        : order.status === 'cancelled'
-                        ? 'bg-red-100 text-red-800'
-                        : 'bg-yellow-100 text-yellow-800'
-                    }`}>
-                      {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
-                    </span>
-                  </div>
+                </div>
+                <div className="text-right">
+                  <p className="font-medium text-gray-900">
+                    {order.tableNumber ? `Table ${order.tableNumber}` : 'Takeout'}
+                  </p>
+                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium mt-1 ${
+                    order.status === 'ready' 
+                      ? 'bg-green-100 text-green-800'
+                      : order.status === 'cancelled'
+                      ? 'bg-red-100 text-red-800'
+                      : 'bg-yellow-100 text-yellow-800'
+                  }`}>
+                    {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
+                  </span>
                 </div>
               </div>
 
               {/* Order Items */}
               <div className="p-4">
-                <h3 className="font-medium mb-2">Items:</h3>
-                <ul className="divide-y">
+                <h3 className="font-medium text-gray-900 mb-3">Order Items</h3>
+                <div className="space-y-4">
                   {order.items.map((item) => (
-                    <li key={item._id} className="py-3">
-                      <div className="flex justify-between">
-                        <div className="flex items-center">
-                          {item.menuItem?.image && (
-                            <img
-                              src={item.menuItem.image}
-                              alt={item.menuItem.name}
-                              className="w-12 h-12 object-cover rounded mr-3"
-                              onError={(e) => {
-                                e.target.onerror = null;
-                                e.target.src = '/placeholder-food.jpg';
-                              }}
-                            />
-                          )}
-                          <div>
-                            <p className="font-medium">{item.menuItem?.name || 'Item not available'}</p>
-                            <p className="text-sm text-gray-500">
-                              Qty: {item.quantity}
-                            </p>
-                          </div>
+                    <div key={item._id} className="flex">
+                      {item.menuItem?.image && (
+                        <div className="flex-shrink-0 mr-3">
+                          <img
+                            src={item.menuItem.image}
+                            alt={item.menuItem.name}
+                            className="w-16 h-16 object-cover rounded"
+                            onError={(e) => {
+                              e.target.onerror = null;
+                              e.target.src = '/placeholder-food.jpg';
+                            }}
+                          />
                         </div>
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium text-gray-900 truncate">
+                          {item.menuItem?.name || 'Item not available'}
+                        </p>
+                        <p className="text-sm text-gray-500">
+                          Quantity: {item.quantity}
+                        </p>
+                        
+                        {item.removedIngredients?.length > 0 && (
+                          <p className="text-xs text-gray-500 mt-1">
+                            <span className="font-medium">Exclude:</span> {item.removedIngredients.join(', ')}
+                          </p>
+                        )}
+                        
+                        {item.specialRequest && (
+                          <p className="text-xs text-gray-700 mt-1">
+                            <span className="font-medium">Note:</span> {item.specialRequest}
+                          </p>
+                        )}
                       </div>
-
-                      {/* Removed Ingredients */}
-                      {item.removedIngredients && item.removedIngredients.length > 0 && (
-                        <div className="mt-1 text-xs">
-                          <span className="font-medium text-gray-600">No: </span>
-                          <span className="text-gray-500">
-                            {item.removedIngredients.join(', ')}
-                          </span>
-                        </div>
-                      )}
-
-                      {/* Special Request */}
-                      {item.specialRequest && (
-                        <div className="mt-1 text-xs">
-                          <span className="font-medium text-gray-600">Note: </span>
-                          <span className="text-gray-500">
-                            {item.specialRequest}
-                          </span>
-                        </div>
-                      )}
-                    </li>
+                    </div>
                   ))}
-                </ul>
+                </div>
               </div>
 
               {/* Status Controls */}
-              <div className="p-4 bg-gray-50 border-t flex justify-between">
+              <div className="p-4 bg-gray-50 flex flex-wrap gap-2 justify-between sm:justify-end">
                 <button
                   onClick={() => updateOrderStatus(order._id, 'pending')}
-                  className={`px-3 py-1 text-sm rounded ${order.status === 'pending' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700'}`}
+                  className={`px-3 py-1 text-sm rounded-md ${
+                    order.status === 'pending'
+                      ? 'bg-blue-600 text-white'
+                      : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                  }`}
                   disabled={order.status === 'pending'}
                 >
-                  Pending
+                  Set Pending
                 </button>
                 <button
                   onClick={() => updateOrderStatus(order._id, 'preparing')}
-                  className={`px-3 py-1 text-sm rounded ${order.status === 'preparing' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700'}`}
+                  className={`px-3 py-1 text-sm rounded-md ${
+                    order.status === 'preparing'
+                      ? 'bg-blue-600 text-white'
+                      : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                  }`}
                   disabled={order.status === 'preparing'}
                 >
-                  Preparing
+                  Set Preparing
                 </button>
                 <button
                   onClick={() => updateOrderStatus(order._id, 'ready')}
-                  className={`px-3 py-1 text-sm rounded ${order.status === 'ready' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700'}`}
+                  className={`px-3 py-1 text-sm rounded-md ${
+                    order.status === 'ready'
+                      ? 'bg-blue-600 text-white'
+                      : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                  }`}
                   disabled={order.status === 'ready'}
                 >
-                  Ready
+                  Set Ready
                 </button>
                 <button
                   onClick={() => updateOrderStatus(order._id, 'completed')}
-                  className="px-3 py-1 text-sm bg-green-600 text-white rounded hover:bg-green-700"
+                  className="px-3 py-1 text-sm bg-green-600 text-white rounded-md hover:bg-green-700"
                 >
-                  Complete
+                  Complete Order
                 </button>
               </div>
             </div>

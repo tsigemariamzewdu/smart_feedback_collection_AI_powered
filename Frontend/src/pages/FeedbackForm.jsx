@@ -83,7 +83,7 @@ const FeedbackForm = () => {
     setIsSubmitting(true)
 
     try {
-      await api.post(`/feedback/${orderId}`, formData)
+      await api.post("/feedback", formData)
       toast.success("Thank you for your feedback!")
       navigate("/orders")
     } catch (error) {

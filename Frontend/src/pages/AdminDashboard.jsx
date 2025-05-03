@@ -58,7 +58,7 @@ const AdminDashboard = () => {
         role: "chef",
       }
 
-      await api.post("/api/users", chefData)
+      await api.post("/auth/register", chefData)
       setSuccess("Chef added successfully!")
       setFormData({
         name: "",

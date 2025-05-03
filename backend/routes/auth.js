@@ -1,6 +1,6 @@
 const express = require('express');
 const jwt = require('jsonwebtoken');
-const User = require('../models/user');
+const User = require('../models/User');
 const router = express.Router();
 const bcrypt = require("bcryptjs")
 
@@ -19,7 +19,7 @@ const sanitizeUser = (user) => {
 // Register
 router.post('/register', async (req, res) => {
   try {
-    const { name, email, password, phone } = req.body; // Added phone
+    const { name, email, password, phone,role } = req.body; // Added phone
 
     // Validate input
     if (!name || !email || !password) {
@@ -34,8 +34,9 @@ router.post('/register', async (req, res) => {
       name: name.trim(),
       email: email.toLowerCase().trim(),
       password,
-      phone: phone?.trim(), // Added phone
-      role: 'customer' // Force role to customer for self-registration
+      phone: phone?.trim(), 
+      role: role// Added phone
+      // role: 'customer' // Force role to customer for self-registration
     });
 
 

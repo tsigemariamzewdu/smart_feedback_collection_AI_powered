@@ -2,7 +2,7 @@ const express = require('express');
 const { checkAuth } = require('../middleware/auth');
 const Order = require('../models/Order');
 const MenuItem = require('../models/MenuItem');
-const user = require('../models/user');
+const user = require('../models/User');
 const router = express.Router();
 const mongoose=require("mongoose")
 
@@ -57,7 +57,27 @@ router.get('/my-orders', checkAuth, async (req, res) => {
     res.status(500).json({ message: 'Server error' });
   }
 });
+router.get('/all-orders', async (req, res) => {
+  try {
+    // Check if the requesting user is an admin (you might want to add this)
+    // if (!req.user.isAdmin) {
+    //   return res.status(403).json({ message: 'Unauthorized' });
+    // }
 
+    const orders = await Order.find({})
+      .populate({
+        path: 'user',
+        select: 'name email specialMessage' // Include whatever user fields you need
+      })
+      .populate('items.menuItem')
+      .populate('feedback');
+    
+    res.json(orders);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
 // Get order by ID (protected route)
 router.get('/:id', checkAuth, async (req, res) => {
   try {

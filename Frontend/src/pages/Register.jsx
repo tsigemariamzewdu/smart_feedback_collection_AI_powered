@@ -12,6 +12,7 @@ const Register = () => {
     password: "",
     confirmPassword: "",
     phone: "",
+    role:"cusotmer"
   })
   const [isLoading, setIsLoading] = useState(false)
 
