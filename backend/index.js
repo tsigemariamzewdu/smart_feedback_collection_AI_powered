@@ -20,7 +20,7 @@ app.use(express.json());
 app.use(cookieParser());
 
 // Database connection
-mongoose.connect('mongodb://127.0.0.1:27017/foodfeedback')
+mongoose.connect('mongodb+srv://tsigemariam:birhan2121@cluster0.ucyxwra.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0')
   .then(() => console.log('MongoDB connected'))
   .catch(err => console.log('Connection error:', err));
 // Routes
