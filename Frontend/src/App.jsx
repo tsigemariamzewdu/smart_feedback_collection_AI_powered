@@ -4,6 +4,7 @@ import Navbar from "./components/Navbar"
 import Home from "./pages/Home"
 import Menu from "./pages/Menu"
 import OrderHistory from "./pages/OrderHistory"
+import OrderDetail from "./pages/OrderDetail"
 import FeedbackForm from "./pages/FeedbackForm"
 import ChefDashboard from "./pages/ChefDashboard"
 import Login from "./pages/Login"
@@ -22,6 +23,7 @@ function App() {
             <Route path="/" element={<Home />} />
             <Route path="/menu" element={<Menu />} />
             <Route path="/orders" element={<OrderHistory />} />
+            <Route path="/orders/:orderId" element={<OrderDetail />} />
             <Route path="/feedback/:orderId" element={<FeedbackForm />} />
             <Route path="/chef-dashboard" element={<ChefDashboard />} />
             <Route path="/admin" element={<AdminDashboard/>}/>
