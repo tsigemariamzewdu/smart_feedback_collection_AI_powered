@@ -84,7 +84,12 @@ const MyOrders = () => {
               <div className="flex justify-between items-center">
                 <div>
                   <h2 className="font-semibold text-lg">
-                    Order #{order._id.slice(-6).toUpperCase()}
+                    <button 
+                      onClick={() => navigate(`/orders/${order._id}`)}
+                      className="hover:text-blue-600 transition-colors"
+                    >
+                      Order #{order._id.slice(-6).toUpperCase()}
+                    </button>
                   </h2>
                   <p className="text-sm text-gray-500">
                     {new Date(order.createdAt).toLocaleDateString('en-US', {
