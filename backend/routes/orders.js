@@ -2,21 +2,79 @@ const express = require('express');
 const { checkAuth } = require('../middleware/auth');
 const Order = require('../models/Order');
 const MenuItem = require('../models/MenuItem');
-const user = require('../models/User');
+const Feedback = require('../models/Feedback');
 const router = express.Router();
 const mongoose=require("mongoose")
 
 // Create new order (protected route)
-// Remove any transaction/session code like this:
 router.post('/', checkAuth, async (req, res) => {
+  try {
+    const { items, total } = req.body;
+    const userId = req.userId;
+
+    // Validate required fields
+    if (!items || !Array.isArray(items) || items.length === 0) {
+      return res.status(400).json({ message: 'Items array is required and cannot be empty' });
+    }
+
+    if (!total || typeof total !== 'number') {
+      return res.status(400).json({ message: 'Total amount is required' });
+    }
+
+    // Validate each item
+    for (const item of items) {
+      if (!item.menuItem || !item.quantity || !item.priceAtOrder) {
+        return res.status(400).json({ message: 'Each item must have menuItem, quantity, and priceAtOrder' });
+      }
+
+      // Verify menu item exists
+      const menuItem = await MenuItem.findById(item.menuItem);
+      if (!menuItem) {
+        return res.status(400).json({ message: `Menu item with ID ${item.menuItem} not found` });
+      }
+    }
+
+    // Create new order
+    const order = new Order({
+      user: userId,
+      items: items.map(item => ({
+        menuItem: item.menuItem,
+        quantity: item.quantity,
+        priceAtOrder: item.priceAtOrder,
+        removedIngredients: item.removedIngredients || [],
+        specialRequest: item.specialRequest || ""
+      })),
+      total: total,
+      status: 'pending'
+    });
+
+    await order.save();
+
+    // Populate menu items for response
+    await order.populate('items.menuItem');
+
+    res.status(201).json({
+      success: true,
+      orderId: order._id,
+      order: order
+    });
+
+  } catch (err) {
+    console.error('Error creating order:', err);
+    res.status(500).json({ message: 'Server error while creating order' });
+  }
+});
+
+// Submit feedback for an order (protected route)
+router.post('/feedback', checkAuth, async (req, res) => {
   try {
     const { orderId, items } = req.body;
     const userId = req.userId;
 
     // Validate items array exists and has ratings
-    // if (!items || !Array.isArray(items) {
-    //   return res.status(400).json({ message: 'Items array is required' });
-    // }
+    if (!items || !Array.isArray(items)) {
+      return res.status(400).json({ message: 'Items array is required' });
+    }
 
     // Check order exists and belongs to user
     const order = await Order.findOne({
@@ -60,7 +118,9 @@ router.post('/', checkAuth, async (req, res) => {
     res.status(500).json({ message: 'Server error' });
   }
 });
-router.patch('/:id/status',checkAuth, async (req, res) => {
+
+// Update order status (protected route)
+router.patch('/:id/status', checkAuth, async (req, res) => {
   try {
     const { status } = req.body;
     const order = await Order.findByIdAndUpdate(
@@ -91,17 +151,14 @@ router.get('/my-orders', checkAuth, async (req, res) => {
     res.status(500).json({ message: 'Server error' });
   }
 });
+
+// Get all orders (admin route)
 router.get('/all-orders', async (req, res) => {
   try {
-    // Check if the requesting user is an admin (you might want to add this)
-    // if (!req.user.isAdmin) {
-    //   return res.status(403).json({ message: 'Unauthorized' });
-    // }
-
     const orders = await Order.find({})
       .populate({
         path: 'user',
-        select: 'name email specialMessage' // Include whatever user fields you need
+        select: 'name email specialMessage'
       })
       .populate('items.menuItem')
       .populate('feedback');
@@ -112,6 +169,7 @@ router.get('/all-orders', async (req, res) => {
     res.status(500).json({ message: 'Server error' });
   }
 });
+
 // Get order by ID (protected route)
 router.get('/:id', checkAuth, async (req, res) => {
   try {
