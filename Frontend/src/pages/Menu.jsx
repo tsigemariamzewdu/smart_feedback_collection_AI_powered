@@ -19,7 +19,7 @@ const Menu = () => {
   const [specialRequest, setSpecialRequest] = useState("")
   const [removedIngredients, setRemovedIngredients] = useState([])
 
-  const { isAuthenticated } = useAuth()
+  const { isAuthenticated, user } = useAuth()
   const navigate = useNavigate()
 
   useEffect(() => {
@@ -122,7 +122,6 @@ const Menu = () => {
     try {
       // Prepare order data
       const orderData = {
-        // user: userId,
         items: cart.map((item) => ({
           menuItem: item._id,
           quantity: item.quantity,
@@ -133,13 +132,7 @@ const Menu = () => {
         total: calculateTotal(),
       };
   
-      const token = localStorage.getItem('token');
-      const response = await api.post("/orders", orderData, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
+      const response = await api.post("/orders", orderData);
   
       if (response.data.success) {
         toast.success("Order placed successfully!");
@@ -150,7 +143,7 @@ const Menu = () => {
       }
     } catch (error) {
       console.error("Error placing order:", error);
-      toast.error(error.message || "Failed to place order");
+      toast.error(error.response?.data?.message || error.message || "Failed to place order");
     } finally {
       setIsPlacingOrder(false);
     }
