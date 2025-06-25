@@ -6,6 +6,7 @@ import Menu from "./pages/Menu"
 import OrderHistory from "./pages/OrderHistory"
 import OrderDetail from "./pages/OrderDetail"
 import FeedbackForm from "./pages/FeedbackForm"
+import FeedbackInsights from "./pages/FeedbackInsights"
 import ChefDashboard from "./pages/ChefDashboard"
 import Login from "./pages/Login"
 import Register from "./pages/Register"
@@ -25,6 +26,7 @@ function App() {
             <Route path="/orders" element={<OrderHistory />} />
             <Route path="/orders/:orderId" element={<OrderDetail />} />
             <Route path="/feedback/:orderId" element={<FeedbackForm />} />
+            <Route path="/feedback-insights" element={<FeedbackInsights />} />
             <Route path="/chef-dashboard" element={<ChefDashboard />} />
             <Route path="/admin" element={<AdminDashboard/>}/>
             <Route path="/login" element={<Login />} />
