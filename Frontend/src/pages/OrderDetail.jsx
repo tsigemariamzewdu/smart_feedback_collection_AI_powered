@@ -10,6 +10,7 @@ const OrderDetail = () => {
   const { orderId } = useParams();
   const { isAuthenticated } = useAuth();
   const navigate = useNavigate();
+  const [showFeedbackDetails, setShowFeedbackDetails] = useState(false);
 
   useEffect(() => {
     const fetchOrder = async () => {
@@ -186,9 +187,27 @@ const OrderDetail = () => {
                   </svg>
                 ))}
               </div>
-              <p className="text-gray-600">{order.feedback.comment}</p>
+              {!showFeedbackDetails && order.feedback.comment && (
+                <button
+                  className="text-blue-600 hover:underline text-sm"
+                  onClick={() => setShowFeedbackDetails(true)}
+                >
+                  See More
+                </button>
+              )}
+              {showFeedbackDetails && order.feedback.comment && (
+                <div>
+                  <p className="text-gray-600 mt-2">{order.feedback.comment}</p>
+                  <button
+                    className="text-blue-600 hover:underline text-sm mt-1"
+                    onClick={() => setShowFeedbackDetails(false)}
+                  >
+                    Show Less
+                  </button>
+                </div>
+              )}
             </div>
-          ) : (
+          ) : (order.status === 'ready' || order.status === 'completed') ? (
             <div>
               <p className="text-gray-600 mb-2">No feedback yet</p>
               <button
@@ -198,6 +217,10 @@ const OrderDetail = () => {
                 + Add Feedback
               </button>
             </div>
+          ) : (
+            <p className="text-gray-600 mb-2">
+              Feedback will be available once your order is ready.
+            </p>
           )}
         </div>
       </div>
