@@ -80,7 +80,7 @@ router.post('/feedback', checkAuth, async (req, res) => {
     const order = await Order.findOne({
       _id: orderId,
       user: userId,
-      status: 'completed'
+      status: { $in: ['ready', 'completed'] }
     });
 
     if (!order) {
@@ -144,7 +144,13 @@ router.get('/my-orders', checkAuth, async (req, res) => {
   try {
     const orders = await Order.find({ user: req.userId })
       .populate('items.menuItem')
-      .populate('feedback');
+      .populate({
+        path: 'feedback',
+        populate: {
+          path: 'items.menuItem',
+          select: 'name'
+        }
+      });
     res.json(orders);
   } catch (err) {
     console.error(err);
@@ -161,7 +167,13 @@ router.get('/all-orders', async (req, res) => {
         select: 'name email specialMessage'
       })
       .populate('items.menuItem')
-      .populate('feedback');
+      .populate({
+        path: 'feedback',
+        populate: {
+          path: 'items.menuItem',
+          select: 'name'
+        }
+      });
     
     res.json(orders);
   } catch (err) {
@@ -176,7 +188,13 @@ router.get('/:id', checkAuth, async (req, res) => {
     const order = await Order.findOne({
       _id: req.params.id,
       user: req.userId
-    }).populate('items.menuItem').populate('feedback');
+    }).populate('items.menuItem').populate({
+      path: 'feedback',
+      populate: {
+        path: 'items.menuItem',
+        select: 'name'
+      }
+    });
 
     if (!order) {
       return res.status(404).json({ message: 'Order not found' });
