@@ -82,7 +82,7 @@ const FeedbackForm = () => {
     setIsSubmitting(true);
   
     try {
-      await api.post("/feedback", {
+      await api.post("/orders/feedback", {
         orderId, // Make sure this is passed from props/params
         items: formData.items.map(item => ({
           menuItemId: item.menuItemId,
