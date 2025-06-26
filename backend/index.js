@@ -3,6 +3,7 @@ const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const cookieParser = require('cookie-parser');
+const  userRoutes=require("./routes/users")
 const authRoutes = require('./routes/auth');
 const menuRoutes = require('./routes/menu');
 const orderRoutes = require('./routes/orders');
@@ -24,6 +25,7 @@ mongoose.connect('mongodb+srv://tsigemariam:birhan2121@cluster0.ucyxwra.mongodb.
   .then(() => console.log('MongoDB connected'))
   .catch(err => console.log('Connection error:', err));
 // Routes
+app.use('/api/users',userRoutes)
 app.use('/api/auth', authRoutes);
 app.use('/api/menu', menuRoutes);
 app.use('/api/orders', orderRoutes);

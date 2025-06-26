@@ -87,7 +87,6 @@ const MyOrders = () => {
       <div className="space-y-6">
         {orders.map((order) => (
           <div key={order._id} className="bg-white rounded-lg shadow overflow-hidden">
-          {console.log('Order items:', order.items,)}
             {/* Order Header */}
             <div className="p-4 border-b">
               <div className="flex justify-between items-center">
@@ -205,30 +204,30 @@ const MyOrders = () => {
                   {/* Show "See More" button if there are item ratings */}
                   {order.feedback.items && order.feedback.items.length > 0 && (
                     <>
-                      {!expandedComments[order._id] && (
+                      {!expandedComments[order._id] ? (
                         <button
                           onClick={() => toggleComment(order._id)}
                           className="text-blue-600 hover:underline text-sm mb-3"
                         >
                           + Show Details
                         </button>
-                      )}
-                      
-                      {/* Show item ratings and comments when expanded */}
-                      {expandedComments[order._id] && (
+                      ) : (
                         <div className="space-y-3">
                           {/* Individual Item Ratings */}
                           <div className="mb-3">
                             <h4 className="text-sm font-medium text-gray-700 mb-2">Item Ratings:</h4>
                             <div className="space-y-2">
                               {order.feedback.items.map((feedbackItem, index) => {
+                                // Find the corresponding order item
                                 const orderItem = order.items.find(item => 
-                                  item.menuItem._id === feedbackItem.menuItem
+                                  item._id === feedbackItem.orderItemId ||  // Try matching by orderItemId first
+                                  item.menuItem?._id === feedbackItem.menuItem // Fallback to menuItem ID
                                 );
+                                
                                 return (
                                   <div key={index} className="flex items-center justify-between text-sm">
                                     <span className="text-gray-600">
-                                      {orderItem?.menuItem?.name || 'Item'}
+                                      {orderItem?.menuItem?.name || feedbackItem.menuItemName || 'Unknown Item'}
                                     </span>
                                     <div className="flex items-center">
                                       {[...Array(5)].map((_, i) => (
@@ -256,12 +255,14 @@ const MyOrders = () => {
                               <div className="space-y-2">
                                 {order.feedback.items.map((feedbackItem, index) => {
                                   const orderItem = order.items.find(item => 
-                                    item.menuItem._id === feedbackItem.menuItem
+                                    item._id === feedbackItem.orderItemId || 
+                                    item.menuItem?._id === feedbackItem.menuItem
                                   );
+                                  
                                   return feedbackItem.comment ? (
                                     <div key={index} className="text-sm">
                                       <span className="font-medium text-gray-600">
-                                        {orderItem?.menuItem?.name || 'Item'}:
+                                        {orderItem?.menuItem?.name || feedbackItem.menuItemName || 'Item'}:
                                       </span>
                                       <p className="text-gray-600 mt-1">{feedbackItem.comment}</p>
                                     </div>
