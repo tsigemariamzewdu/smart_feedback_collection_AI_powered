@@ -26,9 +26,9 @@ const AdminDashboard = () => {
   const fetchData = async () => {
     try {
       const [chefsRes, customersRes, ordersRes] = await Promise.all([
-        api.get("/api/users?role=chef"),
-        api.get("/api/users?role=customer"),
-        api.get("/api/orders"),
+        api.get("/users?role=chef"),
+        api.get("/users?role=customer"),
+        api.get("/orders"),
       ])
 
       setChefs(chefsRes.data)
