@@ -28,7 +28,7 @@ const AdminDashboard = () => {
       const [chefsRes, customersRes, ordersRes] = await Promise.all([
         api.get("/users?role=chef"),
         api.get("/users?role=customer"),
-        api.get("/orders"),
+        api.get("/orders/all-orders"),
       ])
 
       setChefs(chefsRes.data)
@@ -424,7 +424,7 @@ const AdminDashboard = () => {
                           <div className="text-sm font-medium text-gray-900">#{order._id.slice(-6)}</div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm text-gray-900">{order.customer?.name || "Unknown"}</div>
+                          <div className="text-sm text-gray-900">{order.user?.name || "Unknown"}</div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="text-sm text-gray-500">{order.items.length} items</div>
