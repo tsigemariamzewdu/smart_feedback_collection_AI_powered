@@ -40,7 +40,7 @@ const Login = () => {
           navigate("/admin")
           break
         case 'chef':
-          navigate("/chef-dashboard")
+          navigate("/chef")
           break
         case 'customer':
         default:
