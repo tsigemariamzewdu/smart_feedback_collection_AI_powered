@@ -4,7 +4,7 @@ import { Link } from "react-router-dom"
 import { useAuth } from "../context/AuthContext"
 
 const Navbar = () => {
-  const { isAuthenticated, isChef, logout } = useAuth()
+  const { isAuthenticated, isChef, isAdmin, logout } = useAuth()
 
   return (
     <nav className="bg-white shadow-md">
@@ -17,20 +17,29 @@ const Navbar = () => {
           </div>
 
           <div className="flex items-center space-x-4">
-            <Link to="/menu" className="text-gray-600 hover:text-gray-900">
-              Menu
-            </Link>
+            {!isChef && (
+              <Link to="/menu" className="text-gray-600 hover:text-gray-900">
+                Menu
+              </Link>
+            )}
 
             {isAuthenticated ? (
               <>
-                <Link to="/orders" className="text-gray-600 hover:text-gray-900">
-                  My Orders
-                </Link>
+                {!(isChef || isAdmin) && (
+                  <Link to="/orders" className="text-gray-600 hover:text-gray-900">
+                    My Orders
+                  </Link>
+                )}
 
                 {isChef && (
-                  <Link to="/chef-dashboard" className="text-gray-600 hover:text-gray-900">
-                    Chef Dashboard
-                  </Link>
+                  <>
+                    <Link to="/chef-dashboard" className="text-gray-600 hover:text-gray-900">
+                      Chef Dashboard
+                    </Link>
+                    <Link to="/feedback-insights" className="text-gray-600 hover:text-gray-900">
+                      Feedback Insights
+                    </Link>
+                  </>
                 )}
 
                 <button onClick={logout} className="text-gray-600 hover:text-gray-900">
