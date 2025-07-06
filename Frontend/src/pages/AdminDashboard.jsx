@@ -9,6 +9,18 @@ const AdminDashboard = () => {
   const [customers, setCustomers] = useState([])
   const [orders, setOrders] = useState([])
   const [activeTab, setActiveTab] = useState("chefs")
+  const [foodForm, setFoodForm] = useState({
+    name: '',
+    description: '',
+    price: '',
+    category: '',
+    image: '',
+    ingredients: '',
+    available: true
+  })
+  const [foodError, setFoodError] = useState("")
+  const [foodSuccess, setFoodSuccess] = useState("")
+  const [foodLoading, setFoodLoading] = useState(false)
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -86,6 +98,35 @@ const AdminDashboard = () => {
         return "bg-gray-100 text-gray-800"
       default:
         return "bg-gray-100 text-gray-800"
+    }
+  }
+
+  const handleFoodChange = (e) => {
+    const { name, value, type, checked } = e.target
+    setFoodForm({
+      ...foodForm,
+      [name]: type === 'checkbox' ? checked : value
+    })
+  }
+
+  const handleAddFood = async (e) => {
+    e.preventDefault()
+    setFoodError("")
+    setFoodSuccess("")
+    setFoodLoading(true)
+    try {
+      const payload = {
+        ...foodForm,
+        price: parseFloat(foodForm.price),
+        ingredients: foodForm.ingredients.split(',').map(i => i.trim()).filter(Boolean)
+      }
+      await api.post('/menu', payload)
+      setFoodSuccess('Menu item added successfully!')
+      setFoodForm({ name: '', description: '', price: '', category: '', image: '', ingredients: '', available: true })
+    } catch (err) {
+      setFoodError(err.response?.data?.message || 'Failed to add menu item')
+    } finally {
+      setFoodLoading(false)
     }
   }
 
@@ -170,6 +211,17 @@ const AdminDashboard = () => {
           >
             <ShoppingBag className="mr-2 h-5 w-5" />
             Orders
+          </button>
+          <button
+            className={`${
+              activeTab === "addFood"
+                ? "border-green-600 text-green-600"
+                : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+            } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center`}
+            onClick={() => setActiveTab("addFood")}
+          >
+            <PlusCircle className="mr-2 h-5 w-5" />
+            Add Food
           </button>
         </nav>
       </div>
@@ -448,6 +500,58 @@ const AdminDashboard = () => {
                 </table>
               </div>
             )}
+          </div>
+        )}
+
+        {activeTab === "addFood" && (
+          <div className="bg-white rounded-lg shadow-md p-6 mb-8 max-w-2xl mx-auto">
+            <h2 className="text-xl font-semibold text-gray-900 mb-6">Add New Menu Item</h2>
+            {foodError && (
+              <div className="bg-red-50 border-l-4 border-red-500 p-4 mb-6">
+                <p className="text-sm text-red-700">{foodError}</p>
+              </div>
+            )}
+            {foodSuccess && (
+              <div className="bg-green-50 border-l-4 border-green-500 p-4 mb-6">
+                <p className="text-sm text-green-700">{foodSuccess}</p>
+              </div>
+            )}
+            <form onSubmit={handleAddFood}>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
+                  <input type="text" name="name" value={foodForm.name} onChange={handleFoodChange} required className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
+                  <input type="text" name="category" value={foodForm.category} onChange={handleFoodChange} required className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Price</label>
+                  <input type="number" name="price" value={foodForm.price} onChange={handleFoodChange} required min="0" step="0.01" className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Image URL</label>
+                  <input type="text" name="image" value={foodForm.image} onChange={handleFoodChange} required className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500" />
+                </div>
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                  <textarea name="description" value={foodForm.description} onChange={handleFoodChange} required className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500" />
+                </div>
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Ingredients (comma separated)</label>
+                  <input type="text" name="ingredients" value={foodForm.ingredients} onChange={handleFoodChange} className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500" />
+                </div>
+                <div className="flex items-center md:col-span-2">
+                  <input type="checkbox" name="available" checked={foodForm.available} onChange={handleFoodChange} className="mr-2" />
+                  <label className="text-gray-700">Available</label>
+                </div>
+              </div>
+              <button type="submit" disabled={foodLoading} className="flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:bg-green-300 disabled:cursor-not-allowed">
+                <PlusCircle className="mr-2 h-5 w-5" />
+                {foodLoading ? 'Adding...' : 'Add Menu Item'}
+              </button>
+            </form>
           </div>
         )}
       </div>
