@@ -25,6 +25,11 @@ const MenuItemSchema = new mongoose.Schema({
     type: [String],
     default: []
   },
+  chef: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: true // Each menu item must have a chef
+  },
   available: {
     type: Boolean,
     default: true
