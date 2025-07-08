@@ -3,6 +3,8 @@ const { checkAuth } = require('../middleware/auth');
 const Feedback = require('../models/Feedback');
 const Order = require('../models/Order');
 const sentimentAnalyzer = require('../services/sentimentAnalysis');
+const MenuItem = require('../models/MenuItem');
+const User = require('../models/User');
 const router = express.Router();
 
 // Submit feedback for an order (protected route)
@@ -203,6 +205,93 @@ router.get('/menu-item/:menuItemId', checkAuth, async (req, res) => {
   } catch (err) {
     console.error('Error fetching menu item feedback:', err);
     res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Admin analytics endpoint
+router.get('/analytics/admin', async (req, res) => {
+  try {
+    // Get all menu items
+    const menuItems = await MenuItem.find();
+    // Get all feedback
+    const feedbacks = await Feedback.find();
+    // Get all orders
+    const orders = await Order.find();
+    // Get all chefs
+    const chefs = await User.find({ role: 'chef' });
+
+    // Aggregate feedback by menu item
+    const menuItemRatings = {};
+    feedbacks.forEach(fb => {
+      (fb.items || []).forEach(item => {
+        if (!menuItemRatings[item.menuItem]) {
+          menuItemRatings[item.menuItem] = { total: 0, count: 0 };
+        }
+        menuItemRatings[item.menuItem].total += item.rating || 0;
+        menuItemRatings[item.menuItem].count += 1;
+      });
+    });
+    const foodRatings = menuItems.map(item => {
+      const stats = menuItemRatings[item._id] || { total: 0, count: 0 };
+      const averageRating = stats.count > 0 ? stats.total / stats.count : 0;
+      return { name: item.name, averageRating: parseFloat(averageRating.toFixed(2)) };
+    });
+    // Most liked and hated food
+    const sortedByRating = [...foodRatings].sort((a, b) => b.averageRating - a.averageRating);
+    const mostLikedFood = sortedByRating[0] || { name: '', averageRating: 0 };
+    const mostHatedFood = sortedByRating[sortedByRating.length - 1] || { name: '', averageRating: 0 };
+
+    // Food order counts
+    const menuItemOrderCounts = {};
+    orders.forEach(order => {
+      (order.items || []).forEach(item => {
+        if (!menuItemOrderCounts[item.menuItem]) {
+          menuItemOrderCounts[item.menuItem] = 0;
+        }
+        menuItemOrderCounts[item.menuItem] += 1;
+      });
+    });
+    const foodOrders = menuItems.map(item => {
+      const orderCount = menuItemOrderCounts[item._id] || 0;
+      return { name: item.name, orderCount };
+    });
+    const sortedByOrders = [...foodOrders].sort((a, b) => b.orderCount - a.orderCount);
+    const mostOrderedFood = sortedByOrders[0] || { name: '', orderCount: 0 };
+    const leastOrderedFood = sortedByOrders[sortedByOrders.length - 1] || { name: '', orderCount: 0 };
+
+    // Chef performance (average rating for orders prepared by each chef)
+    const chefPerformance = await Promise.all(chefs.map(async chef => {
+      // Find orders prepared by this chef
+      const chefOrders = orders.filter(order => String(order.chef) === String(chef._id));
+      // Get feedback for those orders
+      let total = 0, count = 0;
+      chefOrders.forEach(order => {
+        if (order.feedback) {
+          const fb = feedbacks.find(f => String(f._id) === String(order.feedback));
+          if (fb && fb.items) {
+            fb.items.forEach(item => {
+              total += item.rating || 0;
+              count += 1;
+            });
+          }
+        }
+      });
+      const averageRating = count > 0 ? total / count : 0;
+      return { chefName: chef.name, averageRating: parseFloat(averageRating.toFixed(2)) };
+    }));
+
+    res.json({
+      mostLikedFood,
+      mostHatedFood,
+      foodRatings,
+      mostOrderedFood,
+      leastOrderedFood,
+      foodOrders,
+      chefPerformance,
+    });
+  } catch (error) {
+    console.error('Admin analytics error:', error);
+    res.status(500).json({ message: 'Failed to fetch analytics' });
   }
 });
 

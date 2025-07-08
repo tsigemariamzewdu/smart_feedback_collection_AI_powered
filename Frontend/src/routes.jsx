@@ -9,6 +9,7 @@ import PatientRecord from "./pages/admin/PatientRecord";
 import RecordAuditLogs from "./pages/admin/RecordAuditLogs";
 import StaffManagement from "./pages/admin/StaffManagement";
 import ViewRecords from "./pages/admin/ViewRecords";
+import AdminAnalysis from './pages/AdminAnalysis';
 
 // Receptionist pages
 import ReceptionistDashboard from "./pages/receptionist/Dashboard";
@@ -27,6 +28,7 @@ const AppRoutes = ({ userRole }) => {
           <Route path="/admin/audit-logs" element={<RecordAuditLogs />} />
           <Route path="/admin/staff-management" element={<StaffManagement />} />
           <Route path="/admin/view-records" element={<ViewRecords />} />
+          <Route path="/admin-analysis" element={<AdminAnalysis />} />
           <Route path="/admin" element={<Navigate to="/admin/dashboard" />} />
         </>
       )}

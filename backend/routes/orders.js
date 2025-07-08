@@ -139,6 +139,26 @@ router.patch('/:id/status', checkAuth, async (req, res) => {
   }
 });
 
+// Assign chef to an order
+router.post('/:orderId/assign-chef', require('../middleware/auth').checkAuth, async (req, res) => {
+  const { orderId } = req.params;
+  const chefId = req.userId; // assuming the chef is authenticated
+
+  try {
+    const order = await Order.findById(orderId);
+    if (!order) return res.status(404).json({ message: 'Order not found' });
+
+    // Assign the chef to the order
+    order.chef = chefId;
+    await order.save();
+
+    res.json({ message: 'Chef assigned to this order.' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
 // Get user's orders (protected route)
 router.get('/my-orders', checkAuth, async (req, res) => {
   try {
