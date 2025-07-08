@@ -211,14 +211,87 @@ router.get('/menu-item/:menuItemId', checkAuth, async (req, res) => {
 // Admin analytics endpoint
 router.get('/analytics/admin', async (req, res) => {
   try {
+    // Parse date range (default to 30 days)
+    const days = parseInt(req.query.days) || 30;
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() - days);
+
     // Get all menu items
     const menuItems = await MenuItem.find();
-    // Get all feedback
-    const feedbacks = await Feedback.find();
-    // Get all orders
-    const orders = await Order.find();
+    // Get all feedback within date range
+    const feedbacks = await Feedback.find({ 
+      createdAt: { $gte: startDate } 
+    });
+    // Get all orders within date range
+    const orders = await Order.find({ 
+      createdAt: { $gte: startDate } 
+    });
     // Get all chefs
     const chefs = await User.find({ role: 'chef' });
+
+    // Calculate trends (daily average rating and order count)
+    const trends = [];
+    const dateMap = {};
+    
+    // Initialize dateMap with all dates in range
+    for (let d = new Date(startDate); d <= new Date(); d.setDate(d.getDate() + 1)) {
+      const dateStr = d.toISOString().split('T')[0];
+      dateMap[dateStr] = {
+        date: dateStr,
+        totalRating: 0,
+        ratingCount: 0,
+        orderCount: 0
+      };
+    }
+
+    // Process orders to count daily orders and collect feedback
+    orders.forEach(order => {
+      const dateStr = order.createdAt.toISOString().split('T')[0];
+      if (dateMap[dateStr]) {
+        dateMap[dateStr].orderCount += 1;
+      }
+    });
+
+    // Process feedback to calculate daily average ratings
+    feedbacks.forEach(fb => {
+      const dateStr = fb.createdAt.toISOString().split('T')[0];
+      if (dateMap[dateStr]) {
+        let total = 0;
+        let count = 0;
+        (fb.items || []).forEach(item => {
+          total += item.rating || 0;
+          count += 1;
+        });
+        if (count > 0) {
+          dateMap[dateStr].totalRating += total;
+          dateMap[dateStr].ratingCount += count;
+        }
+      }
+    });
+
+    // Convert dateMap to trends array
+    for (const date in dateMap) {
+      const dayData = dateMap[date];
+      trends.push({
+        date: dayData.date,
+        averageRating: dayData.ratingCount > 0 ? (dayData.totalRating / dayData.ratingCount) : 0,
+        orderCount: dayData.orderCount
+      });
+    }
+
+    // Sort trends by date
+    trends.sort((a, b) => new Date(a.date) - new Date(b.date));
+
+    // Calculate overall rating
+    let totalRating = 0;
+    let ratingCount = 0;
+    feedbacks.forEach(fb => {
+      (fb.items || []).forEach(item => {
+        totalRating += item.rating || 0;
+        ratingCount += 1;
+      });
+    });
+    const overallRating = ratingCount > 0 ? totalRating / ratingCount : 0;
 
     // Aggregate feedback by menu item
     const menuItemRatings = {};
@@ -231,11 +304,16 @@ router.get('/analytics/admin', async (req, res) => {
         menuItemRatings[item.menuItem].count += 1;
       });
     });
+    
     const foodRatings = menuItems.map(item => {
       const stats = menuItemRatings[item._id] || { total: 0, count: 0 };
       const averageRating = stats.count > 0 ? stats.total / stats.count : 0;
-      return { name: item.name, averageRating: parseFloat(averageRating.toFixed(2)) };
+      return { 
+        name: item.name, 
+        averageRating: parseFloat(averageRating.toFixed(2)) 
+      };
     });
+
     // Most liked and hated food
     const sortedByRating = [...foodRatings].sort((a, b) => b.averageRating - a.averageRating);
     const mostLikedFood = sortedByRating[0] || { name: '', averageRating: 0 };
@@ -251,10 +329,12 @@ router.get('/analytics/admin', async (req, res) => {
         menuItemOrderCounts[item.menuItem] += 1;
       });
     });
+    
     const foodOrders = menuItems.map(item => {
       const orderCount = menuItemOrderCounts[item._id] || 0;
       return { name: item.name, orderCount };
     });
+    
     const sortedByOrders = [...foodOrders].sort((a, b) => b.orderCount - a.orderCount);
     const mostOrderedFood = sortedByOrders[0] || { name: '', orderCount: 0 };
     const leastOrderedFood = sortedByOrders[sortedByOrders.length - 1] || { name: '', orderCount: 0 };
@@ -277,22 +357,81 @@ router.get('/analytics/admin', async (req, res) => {
         }
       });
       const averageRating = count > 0 ? total / count : 0;
-      return { chefName: chef.name, averageRating: parseFloat(averageRating.toFixed(2)) };
+      return { 
+        chefName: chef.name, 
+        averageRating: parseFloat(averageRating.toFixed(2)) 
+      };
     }));
 
+    // Calculate trends for metrics
+    const previousPeriodStart = new Date(startDate);
+    previousPeriodStart.setDate(previousPeriodStart.getDate() - days);
+    
+    // Previous period feedback count
+    const prevFeedbacks = await Feedback.countDocuments({ 
+      createdAt: { 
+        $gte: previousPeriodStart,
+        $lt: startDate
+      } 
+    });
+    
+    // Current period feedback count
+    const currentFeedbacks = feedbacks.length;
+    const reviewsTrend = prevFeedbacks > 0 ? 
+      ((currentFeedbacks - prevFeedbacks) / prevFeedbacks) * 100 : 0;
+
+    // Previous period average rating
+    const prevFeedbackDocs = await Feedback.find({ 
+      createdAt: { 
+        $gte: previousPeriodStart,
+        $lt: startDate
+      } 
+    });
+    
+    let prevTotalRating = 0;
+    let prevRatingCount = 0;
+    prevFeedbackDocs.forEach(fb => {
+      (fb.items || []).forEach(item => {
+        prevTotalRating += item.rating || 0;
+        prevRatingCount += 1;
+      });
+    });
+    const prevAvgRating = prevRatingCount > 0 ? prevTotalRating / prevRatingCount : 0;
+    const ratingTrend = prevAvgRating > 0 ? 
+      ((overallRating - prevAvgRating) / prevAvgRating) * 100 : 0;
+
     res.json({
+      // Key metrics
+      totalReviews: feedbacks.length,
+      overallRating,
+      activeChefs: chefs.length,
+      totalMenuItems: menuItems.length,
+      
+      // Trends
+      reviewsTrend: parseFloat(reviewsTrend.toFixed(1)),
+      ratingTrend: parseFloat(ratingTrend.toFixed(1)),
+      chefsTrend: 0, // Not implemented
+      menuTrend: 0,  // Not implemented
+      
+      // Food data
       mostLikedFood,
       mostHatedFood,
       foodRatings,
       mostOrderedFood,
       leastOrderedFood,
       foodOrders,
+      
+      // Chef data
       chefPerformance,
+      
+      // Trend data
+      trends
     });
   } catch (error) {
     console.error('Admin analytics error:', error);
     res.status(500).json({ message: 'Failed to fetch analytics' });
   }
 });
+
 
 module.exports = router;
