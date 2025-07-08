@@ -12,6 +12,7 @@ import Login from "./pages/Login"
 import Register from "./pages/Register"
 import { AuthProvider } from "./context/AuthContext"
 import AdminDashboard from "./pages/AdminDashboard"
+import AdminAnalysis from "./pages/AdminAnalysis"
 
 function App() {
   return (
@@ -29,6 +30,7 @@ function App() {
             <Route path="/feedback-insights" element={<FeedbackInsights />} />
             <Route path="/chef-dashboard" element={<ChefDashboard />} />
             <Route path="/admin" element={<AdminDashboard/>}/>
+            <Route path="/admin-analysis" element={<AdminAnalysis />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
           </Routes>

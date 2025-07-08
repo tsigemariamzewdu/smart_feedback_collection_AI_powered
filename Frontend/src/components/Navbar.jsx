@@ -25,6 +25,17 @@ const Navbar = () => {
               </Link>
             )}
 
+            {isAdmin && (
+              <>
+                <Link to="/admin" className="text-gray-600 hover:text-gray-900">
+                  Dashboard
+                </Link>
+                <Link to="/admin-analysis" className="text-gray-600 hover:text-gray-900">
+                  Analysis
+                </Link>
+              </>
+            )}
+
             {isAuthenticated ? (
               <>
                 {!(isChef || isAdmin) && (
