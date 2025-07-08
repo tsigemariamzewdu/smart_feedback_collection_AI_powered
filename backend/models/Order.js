@@ -34,6 +34,11 @@ const OrderSchema = new mongoose.Schema({
     enum: ['pending', 'processing', 'ready', 'completed'],
     default: 'pending'
   },
+  chef: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: false // Set when a chef takes the order
+  },
 //   deliveryAddress: {
 //     type: String,
 //     required: true
