@@ -78,7 +78,9 @@ const AdminAnalysis = () => {
       const response = await api.get(`/feedback/analytics/admin?days=${dateRange}`, {
         headers: { Authorization: `Bearer ${token}` },
       })
+      console.log(response.data)
       setAnalytics(response.data)
+
     } catch (error) {
       toast.error("Failed to load analytics")
     } finally {
