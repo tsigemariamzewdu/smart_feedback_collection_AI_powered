@@ -47,21 +47,6 @@ const ChefDashboard = () => {
     return () => clearInterval(interval);
   }, [isAuthenticated, navigate, user]);
 
-  // Assign chef to menu items in an order
-  const assignChefToOrder = async (orderId) => {
-    try {
-      const token = localStorage.getItem('token');
-      await api.post(`/orders/${orderId}/assign-chef`, {}, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-    } catch (error) {
-      console.error('Error assigning chef to order:', error);
-      toast.error('Failed to assign chef to menu items');
-    }
-  };
-
   const updateOrderStatus = async (orderId, newStatus) => {
     try {
       // Map frontend status to backend status
@@ -73,11 +58,6 @@ const ChefDashboard = () => {
       };
 
       const backendStatus = statusMap[newStatus] || newStatus;
-
-      // Assign chef when starting preparation
-      if (newStatus === 'preparing') {
-        await assignChefToOrder(orderId);
-      }
 
       const token = localStorage.getItem('token');
       const response = await api.patch(
