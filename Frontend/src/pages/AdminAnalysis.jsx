@@ -1,14 +1,13 @@
 "use client"
 
 import { useEffect, useState, useMemo } from "react"
-import { motion, AnimatePresence } from "framer-motion"
-import { Bar, Pie, Doughnut, Line, Radar } from "react-chartjs-2"
+import { motion } from "framer-motion"
+import { Bar, Line, Radar } from "react-chartjs-2"
 import {
   Chart as ChartJS,
   CategoryScale,
   LinearScale,
   BarElement,
-  ArcElement,
   Tooltip,
   Legend,
   Title,
@@ -25,7 +24,8 @@ import {
   UtensilsCrossed,
   RefreshCw,
   BarChart3,
-  PieChart,
+  Clock,
+  Users,
 } from "lucide-react"
 import api from "../services/api"
 import { useAuth } from "../context/AuthContext"
@@ -36,7 +36,6 @@ ChartJS.register(
   CategoryScale,
   LinearScale,
   BarElement,
-  ArcElement,
   Tooltip,
   Legend,
   Title,
@@ -51,7 +50,6 @@ const AdminAnalysis = () => {
   const [loading, setLoading] = useState(true)
   const [analytics, setAnalytics] = useState(null)
   const [dateRange, setDateRange] = useState("30")
-  const [viewMode, setViewMode] = useState("overview")
   const [refreshing, setRefreshing] = useState(false)
 
   // Chart color schemes
@@ -78,9 +76,7 @@ const AdminAnalysis = () => {
       const response = await api.get(`/feedback/analytics/admin?days=${dateRange}`, {
         headers: { Authorization: `Bearer ${token}` },
       })
-      console.log(response.data)
       setAnalytics(response.data)
-
     } catch (error) {
       toast.error("Failed to load analytics")
     } finally {
@@ -164,6 +160,19 @@ const AdminAnalysis = () => {
           },
         ],
       },
+      orderVolume: {
+        labels: analytics.foodOrders?.map((f) => f.name) || [],
+        datasets: [
+          {
+            label: "Order Count",
+            data: analytics.foodOrders?.map((f) => f.orderCount) || [],
+            backgroundColor: colorSchemes.info,
+            borderColor: colorSchemes.info[0],
+            borderWidth: 2,
+            borderRadius: 8,
+          },
+        ],
+      },
     }
   }, [analytics])
 
@@ -184,8 +193,8 @@ const AdminAnalysis = () => {
         <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between">
             <div>
-              <h1 className="text-4xl font-bold text-gray-900 mb-2">Analytics Dashboard</h1>
-              <p className="text-gray-600">Comprehensive insights into restaurant performance and customer feedback</p>
+              <h1 className="text-4xl font-bold text-gray-900 mb-2">Restaurant Analytics</h1>
+              <p className="text-gray-600">Key performance metrics and customer feedback analysis</p>
             </div>
 
             <div className="flex items-center gap-4 mt-4 lg:mt-0">
@@ -200,28 +209,6 @@ const AdminAnalysis = () => {
                 <option value="90">Last 3 months</option>
                 <option value="365">Last year</option>
               </select>
-
-              {/* View Mode Toggle */}
-              <div className="flex bg-white rounded-lg p-1 border">
-                <button
-                  onClick={() => setViewMode("overview")}
-                  className={`px-4 py-2 rounded-md transition-colors ${
-                    viewMode === "overview" ? "bg-purple-500 text-white" : "text-gray-600 hover:text-gray-900"
-                  }`}
-                >
-                  <BarChart3 size={16} className="inline mr-2" />
-                  Overview
-                </button>
-                <button
-                  onClick={() => setViewMode("detailed")}
-                  className={`px-4 py-2 rounded-md transition-colors ${
-                    viewMode === "detailed" ? "bg-purple-500 text-white" : "text-gray-600 hover:text-gray-900"
-                  }`}
-                >
-                  <PieChart size={16} className="inline mr-2" />
-                  Detailed
-                </button>
-              </div>
 
               {/* Action Buttons */}
               <button
@@ -282,13 +269,154 @@ const AdminAnalysis = () => {
         </motion.div>
 
         {/* Charts Grid */}
-        <AnimatePresence mode="wait">
-          {viewMode === "overview" ? (
-            <OverviewCharts analytics={analytics} chartData={chartData} colorSchemes={colorSchemes} />
-          ) : (
-            <DetailedCharts analytics={analytics} chartData={chartData} colorSchemes={colorSchemes} />
-          )}
-        </AnimatePresence>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          {/* Food Performance */}
+          <ChartCard title="Top Rated Menu Items" icon={<UtensilsCrossed size={20} />}>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+              <div className="text-center p-4 bg-green-50 rounded-lg">
+                <h4 className="font-semibold text-green-800">Most Popular</h4>
+                <p className="text-2xl font-bold text-green-600">{analytics.mostLikedFood?.name}</p>
+                <p className="text-sm text-green-600">★ {analytics.mostLikedFood?.averageRating?.toFixed(1)}</p>
+              </div>
+              <div className="text-center p-4 bg-red-50 rounded-lg">
+                <h4 className="font-semibold text-red-800">Needs Improvement</h4>
+                <p className="text-2xl font-bold text-red-600">{analytics.mostHatedFood?.name}</p>
+                <p className="text-sm text-red-600">★ {analytics.mostHatedFood?.averageRating?.toFixed(1)}</p>
+              </div>
+            </div>
+            <Bar
+              data={chartData.foodRatings}
+              options={{
+                responsive: true,
+                plugins: {
+                  legend: { display: false },
+                  tooltip: {
+                    backgroundColor: "rgba(0, 0, 0, 0.8)",
+                    titleColor: "white",
+                    bodyColor: "white",
+                    borderColor: colorSchemes.primary[0],
+                    borderWidth: 1,
+                  },
+                },
+                scales: {
+                  y: {
+                    beginAtZero: true,
+                    max: 5,
+                    grid: { color: "rgba(0, 0, 0, 0.1)" },
+                  },
+                  x: {
+                    grid: { display: false },
+                  },
+                },
+              }}
+            />
+          </ChartCard>
+
+          {/* Chef Performance */}
+          <ChartCard title="Chef Performance" icon={<ChefHat size={20} />}>
+            <Radar
+              data={{
+                labels: analytics.chefPerformance?.map((c) => c.chefName) || [],
+                datasets: [
+                  {
+                    label: "Performance Rating",
+                    data: analytics.chefPerformance?.map((c) => c.averageRating) || [],
+                    backgroundColor: colorSchemes.success[0] + "20",
+                    borderColor: colorSchemes.success[0],
+                    borderWidth: 2,
+                    pointBackgroundColor: colorSchemes.success[0],
+                    pointBorderColor: "#fff",
+                    pointHoverBackgroundColor: "#fff",
+                    pointHoverBorderColor: colorSchemes.success[0],
+                  },
+                ],
+              }}
+              options={{
+                responsive: true,
+                plugins: {
+                  legend: { display: false },
+                },
+                scales: {
+                  r: {
+                    beginAtZero: true,
+                    max: 5,
+                    ticks: { display: false },
+                    grid: { color: "rgba(0, 0, 0, 0.1)" },
+                  },
+                },
+              }}
+            />
+          </ChartCard>
+
+          {/* Order Trends */}
+          <ChartCard title="Performance Trends" icon={<TrendingUp size={20} />} className="lg:col-span-2">
+            <Line
+              data={chartData.trendData}
+              options={{
+                responsive: true,
+                interaction: {
+                  mode: "index",
+                  intersect: false,
+                },
+                plugins: {
+                  legend: {
+                    position: "top",
+                  },
+                  tooltip: {
+                    backgroundColor: "rgba(0, 0, 0, 0.8)",
+                    titleColor: "white",
+                    bodyColor: "white",
+                  },
+                },
+                scales: {
+                  x: {
+                    grid: { display: false },
+                  },
+                  y: {
+                    type: "linear",
+                    display: true,
+                    position: "left",
+                    max: 5,
+                    grid: { color: "rgba(0, 0, 0, 0.1)" },
+                  },
+                  y1: {
+                    type: "linear",
+                    display: true,
+                    position: "right",
+                    grid: { drawOnChartArea: false },
+                  },
+                },
+              }}
+            />
+          </ChartCard>
+
+          {/* Order Volume */}
+          <ChartCard title="Menu Item Popularity" icon={<Users size={20} />} className="lg:col-span-2">
+            <Bar
+              data={chartData.orderVolume}
+              options={{
+                responsive: true,
+                plugins: {
+                  legend: { display: false },
+                  tooltip: {
+                    backgroundColor: "rgba(0, 0, 0, 0.8)",
+                    titleColor: "white",
+                    bodyColor: "white",
+                  },
+                },
+                scales: {
+                  y: {
+                    beginAtZero: true,
+                    grid: { color: "rgba(0, 0, 0, 0.1)" },
+                  },
+                  x: {
+                    grid: { display: false },
+                  },
+                },
+              }}
+            />
+          </ChartCard>
+        </div>
       </div>
     </div>
   )
@@ -329,240 +457,6 @@ const MetricCard = ({ title, value, icon, trend, color }) => {
     </motion.div>
   )
 }
-
-// Overview Charts Component
-const OverviewCharts = ({ analytics, chartData, colorSchemes }) => (
-  <motion.div
-    key="overview"
-    initial={{ opacity: 0, x: -20 }}
-    animate={{ opacity: 1, x: 0 }}
-    exit={{ opacity: 0, x: 20 }}
-    className="grid grid-cols-1 lg:grid-cols-2 gap-8"
-  >
-    {/* Food Performance */}
-    <ChartCard title="Food Performance Overview" icon={<UtensilsCrossed size={20} />}>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-        <div className="text-center p-4 bg-green-50 rounded-lg">
-          <h4 className="font-semibold text-green-800">Most Liked</h4>
-          <p className="text-2xl font-bold text-green-600">{analytics.mostLikedFood?.name}</p>
-          <p className="text-sm text-green-600">★ {analytics.mostLikedFood?.averageRating?.toFixed(1)}</p>
-        </div>
-        <div className="text-center p-4 bg-red-50 rounded-lg">
-          <h4 className="font-semibold text-red-800">Needs Improvement</h4>
-          <p className="text-2xl font-bold text-red-600">{analytics.mostHatedFood?.name}</p>
-          <p className="text-sm text-red-600">★ {analytics.mostHatedFood?.averageRating?.toFixed(1)}</p>
-        </div>
-      </div>
-      <Bar
-        data={chartData.foodRatings}
-        options={{
-          responsive: true,
-          plugins: {
-            legend: { display: false },
-            tooltip: {
-              backgroundColor: "rgba(0, 0, 0, 0.8)",
-              titleColor: "white",
-              bodyColor: "white",
-              borderColor: colorSchemes.primary[0],
-              borderWidth: 1,
-            },
-          },
-          scales: {
-            y: {
-              beginAtZero: true,
-              max: 5,
-              grid: { color: "rgba(0, 0, 0, 0.1)" },
-            },
-            x: {
-              grid: { display: false },
-            },
-          },
-        }}
-      />
-    </ChartCard>
-
-    {/* Chef Performance */}
-    <ChartCard title="Chef Performance" icon={<ChefHat size={20} />}>
-      <Radar
-        data={{
-          labels: analytics.chefPerformance?.map((c) => c.chefName) || [],
-          datasets: [
-            {
-              label: "Performance Rating",
-              data: analytics.chefPerformance?.map((c) => c.averageRating) || [],
-              backgroundColor: colorSchemes.success[0] + "20",
-              borderColor: colorSchemes.success[0],
-              borderWidth: 2,
-              pointBackgroundColor: colorSchemes.success[0],
-              pointBorderColor: "#fff",
-              pointHoverBackgroundColor: "#fff",
-              pointHoverBorderColor: colorSchemes.success[0],
-            },
-          ],
-        }}
-        options={{
-          responsive: true,
-          plugins: {
-            legend: { display: false },
-          },
-          scales: {
-            r: {
-              beginAtZero: true,
-              max: 5,
-              ticks: { display: false },
-              grid: { color: "rgba(0, 0, 0, 0.1)" },
-            },
-          },
-        }}
-      />
-    </ChartCard>
-
-    {/* Order Trends */}
-    <ChartCard title="Performance Trends" icon={<TrendingUp size={20} />} className="lg:col-span-2">
-      <Line
-        data={chartData.trendData}
-        options={{
-          responsive: true,
-          interaction: {
-            mode: "index",
-            intersect: false,
-          },
-          plugins: {
-            legend: {
-              position: "top",
-            },
-            tooltip: {
-              backgroundColor: "rgba(0, 0, 0, 0.8)",
-              titleColor: "white",
-              bodyColor: "white",
-            },
-          },
-          scales: {
-            x: {
-              grid: { display: false },
-            },
-            y: {
-              type: "linear",
-              display: true,
-              position: "left",
-              max: 5,
-              grid: { color: "rgba(0, 0, 0, 0.1)" },
-            },
-            y1: {
-              type: "linear",
-              display: true,
-              position: "right",
-              grid: { drawOnChartArea: false },
-            },
-          },
-        }}
-      />
-    </ChartCard>
-  </motion.div>
-)
-
-// Detailed Charts Component
-const DetailedCharts = ({ analytics, chartData, colorSchemes }) => (
-  <motion.div
-    key="detailed"
-    initial={{ opacity: 0, x: 20 }}
-    animate={{ opacity: 1, x: 0 }}
-    exit={{ opacity: 0, x: -20 }}
-    className="grid grid-cols-1 md:grid-cols-2 gap-8"
-  >
-    {/* Most vs Least Liked */}
-    <ChartCard title="Food Preference Analysis" icon={<Star size={20} />}>
-      <Pie
-        data={{
-          labels: [analytics.mostLikedFood?.name, analytics.mostHatedFood?.name],
-          datasets: [
-            {
-              data: [analytics.mostLikedFood?.averageRating, analytics.mostHatedFood?.averageRating],
-              backgroundColor: [colorSchemes.success[0], colorSchemes.danger[0]],
-              borderWidth: 0,
-            },
-          ],
-        }}
-        options={{
-          responsive: true,
-          plugins: {
-            legend: { position: "bottom" },
-            tooltip: {
-              backgroundColor: "rgba(0, 0, 0, 0.8)",
-              titleColor: "white",
-              bodyColor: "white",
-            },
-          },
-        }}
-      />
-    </ChartCard>
-
-    {/* Order Volume */}
-    <ChartCard title="Order Volume Analysis" icon={<BarChart3 size={20} />}>
-      <Doughnut
-        data={{
-          labels: [analytics.mostOrderedFood?.name, analytics.leastOrderedFood?.name],
-          datasets: [
-            {
-              data: [analytics.mostOrderedFood?.orderCount, analytics.leastOrderedFood?.orderCount],
-              backgroundColor: [colorSchemes.info[0], colorSchemes.warning[0]],
-              borderWidth: 0,
-            },
-          ],
-        }}
-        options={{
-          responsive: true,
-          plugins: {
-            legend: { position: "bottom" },
-            tooltip: {
-              backgroundColor: "rgba(0, 0, 0, 0.8)",
-              titleColor: "white",
-              bodyColor: "white",
-            },
-          },
-        }}
-      />
-    </ChartCard>
-
-    {/* Detailed Food Ratings */}
-    <ChartCard title="Detailed Food Ratings" icon={<UtensilsCrossed size={20} />} className="md:col-span-2">
-      <Bar
-        data={{
-          ...chartData.foodRatings,
-          datasets: [
-            {
-              ...chartData.foodRatings.datasets[0],
-              backgroundColor: chartData.foodRatings.datasets[0].data.map((rating) =>
-                rating >= 4 ? colorSchemes.success[0] : rating >= 3 ? colorSchemes.warning[0] : colorSchemes.danger[0],
-              ),
-            },
-          ],
-        }}
-        options={{
-          responsive: true,
-          plugins: {
-            legend: { display: false },
-            tooltip: {
-              backgroundColor: "rgba(0, 0, 0, 0.8)",
-              titleColor: "white",
-              bodyColor: "white",
-            },
-          },
-          scales: {
-            y: {
-              beginAtZero: true,
-              max: 5,
-              grid: { color: "rgba(0, 0, 0, 0.1)" },
-            },
-            x: {
-              grid: { display: false },
-            },
-          },
-        }}
-      />
-    </ChartCard>
-  </motion.div>
-)
 
 // Chart Card Component
 const ChartCard = ({ title, icon, children, className = "" }) => (
