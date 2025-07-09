@@ -6,7 +6,7 @@ const Home = () => {
   return (
     <div className="flex flex-col items-center">
       {/* Hero Section */}
-      <div className="w-full bg-gradient-to-r from-green-600 to-green-800 text-white py-16 px-4 rounded-lg mb-16">
+      <div className="w-full bg-gradient-to-r from-orange-600 to-orange-800 text-white py-16 px-4 rounded-lg mb-16">
         <div className="max-w-5xl mx-auto flex flex-col md:flex-row items-center">
           <div className="md:w-1/2 mb-8 md:mb-0">
             <h1 className="text-5xl font-bold mb-4">Delicious Food, Valuable Feedback</h1>
@@ -16,14 +16,14 @@ const Home = () => {
             <div className="flex flex-wrap gap-4">
               <Link
                 to="/menu"
-                className="bg-white text-green-700 px-6 py-3 rounded-md text-lg font-medium hover:bg-gray-100 flex items-center gap-2 transition-all transform hover:translate-y-[-2px]"
+                className="bg-white text-orange-700 px-6 py-3 rounded-md text-lg font-medium hover:bg-gray-100 flex items-center gap-2 transition-all transform hover:translate-y-[-2px]"
               >
                 <MdRestaurantMenu size={20} />
                 Browse Menu
               </Link>
               <Link
                 to="/register"
-                className="bg-transparent border-2 border-white text-white px-6 py-3 rounded-md text-lg font-medium hover:bg-white hover:text-green-700 flex items-center gap-2 transition-all transform hover:translate-y-[-2px]"
+                className="bg-transparent border-2 border-white text-white px-6 py-3 rounded-md text-lg font-medium hover:bg-white hover:text-orange-700 flex items-center gap-2 transition-all transform hover:translate-y-[-2px]"
               >
                 Create Account
                 <FaArrowRight size={16} />
@@ -47,24 +47,24 @@ const Home = () => {
         <h2 className="text-3xl font-bold text-center mb-12">How It Works</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           <div className="bg-white p-8 rounded-lg shadow-md text-center hover:shadow-xl transition-all transform hover:translate-y-[-5px]">
-            <div className="bg-green-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-              <MdRestaurantMenu size={32} className="text-green-600" />
+            <div className="bg-orange-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+              <MdRestaurantMenu size={32} className="text-orange-600" />
             </div>
             <h3 className="text-xl font-semibold mb-3">Order Food</h3>
             <p className="text-gray-600">Browse our diverse menu and order your favorite dishes with just a few clicks.</p>
           </div>
 
           <div className="bg-white p-8 rounded-lg shadow-md text-center hover:shadow-xl transition-all transform hover:translate-y-[-5px]">
-            <div className="bg-green-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-              <MdDeliveryDining size={32} className="text-green-600" />
+            <div className="bg-orange-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+              <MdDeliveryDining size={32} className="text-orange-600" />
             </div>
             <h3 className="text-xl font-semibold mb-3">Enjoy Your Meal</h3>
             <p className="text-gray-600">Receive your delicious food and savor every bite of our chef's creations.</p>
           </div>
 
           <div className="bg-white p-8 rounded-lg shadow-md text-center hover:shadow-xl transition-all transform hover:translate-y-[-5px]">
-            <div className="bg-green-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-              <MdFeedback size={32} className="text-green-600" />
+            <div className="bg-orange-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+              <MdFeedback size={32} className="text-orange-600" />
             </div>
             <h3 className="text-xl font-semibold mb-3">Share Feedback</h3>
             <p className="text-gray-600">Let us know what you think about your meal to help us improve our offerings.</p>
@@ -79,8 +79,8 @@ const Home = () => {
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <div className="flex gap-4 items-start">
-              <div className="bg-green-100 p-3 rounded-full">
-                <FaUtensils className="text-green-600 text-xl" />
+              <div className="bg-orange-100 p-3 rounded-full">
+                <FaUtensils className="text-orange-600 text-xl" />
               </div>
               <div>
                 <h3 className="text-xl font-semibold mb-2">Quality Ingredients</h3>
@@ -89,8 +89,8 @@ const Home = () => {
             </div>
             
             <div className="flex gap-4 items-start">
-              <div className="bg-green-100 p-3 rounded-full">
-                <FaRegStar className="text-green-600 text-xl" />
+              <div className="bg-orange-100 p-3 rounded-full">
+                <FaRegStar className="text-orange-600 text-xl" />
               </div>
               <div>
                 <h3 className="text-xl font-semibold mb-2">Customer-Driven Menu</h3>
@@ -99,8 +99,8 @@ const Home = () => {
             </div>
             
             <div className="flex gap-4 items-start">
-              <div className="bg-green-100 p-3 rounded-full">
-                <FaHeart className="text-green-600 text-xl" />
+              <div className="bg-orange-100 p-3 rounded-full">
+                <FaHeart className="text-orange-600 text-xl" />
               </div>
               <div>
                 <h3 className="text-xl font-semibold mb-2">Made with Love</h3>
@@ -109,8 +109,8 @@ const Home = () => {
             </div>
             
             <div className="flex gap-4 items-start">
-              <div className="bg-green-100 p-3 rounded-full">
-                <FaChartLine className="text-green-600 text-xl" />
+              <div className="bg-orange-100 p-3 rounded-full">
+                <FaChartLine className="text-orange-600 text-xl" />
               </div>
               <div>
                 <h3 className="text-xl font-semibold mb-2">Continuous Improvement</h3>
@@ -127,7 +127,7 @@ const Home = () => {
         
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           <div className="bg-white p-6 rounded-lg shadow-md relative">
-            <div className="absolute -top-4 left-6 bg-green-600 text-white p-2 rounded-full">
+            <div className="absolute -top-4 left-6 bg-orange-600 text-white p-2 rounded-full">
               <FaCommentAlt />
             </div>
             <div className="pt-4">
@@ -137,7 +137,7 @@ const Home = () => {
           </div>
           
           <div className="bg-white p-6 rounded-lg shadow-md relative">
-            <div className="absolute -top-4 left-6 bg-green-600 text-white p-2 rounded-full">
+            <div className="absolute -top-4 left-6 bg-orange-600 text-white p-2 rounded-full">
               <FaCommentAlt />
             </div>
             <div className="pt-4">
@@ -147,7 +147,7 @@ const Home = () => {
           </div>
           
           <div className="bg-white p-6 rounded-lg shadow-md relative">
-            <div className="absolute -top-4 left-6 bg-green-600 text-white p-2 rounded-full">
+            <div className="absolute -top-4 left-6 bg-orange-600 text-white p-2 rounded-full">
               <FaCommentAlt />
             </div>
             <div className="pt-4">
@@ -159,13 +159,13 @@ const Home = () => {
       </div>
 
       {/* CTA Section */}
-      <div className="w-full bg-green-600 text-white py-12 px-4 rounded-lg mb-8">
+      <div className="w-full bg-orange-600 text-white py-12 px-4 rounded-lg mb-8">
         <div className="max-w-3xl mx-auto text-center">
           <h2 className="text-3xl font-bold mb-4">Ready to Experience Our Food?</h2>
           <p className="text-xl mb-8 opacity-90">Join our community of food lovers and help shape our menu with your valuable feedback.</p>
           <Link
             to="/menu"
-            className="bg-white text-green-700 px-8 py-4 rounded-md text-lg font-bold hover:bg-gray-100 inline-flex items-center gap-2 transition-all transform hover:translate-y-[-2px]"
+            className="bg-white text-orange-700 px-8 py-4 rounded-md text-lg font-bold hover:bg-gray-100 inline-flex items-center gap-2 transition-all transform hover:translate-y-[-2px]"
           >
             Order Now <FaArrowRight />
           </Link>

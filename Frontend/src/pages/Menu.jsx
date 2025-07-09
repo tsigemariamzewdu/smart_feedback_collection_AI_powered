@@ -5,8 +5,6 @@ import { useNavigate } from "react-router-dom"
 import api from "../services/api"
 import { useAuth } from "../context/AuthContext"
 import toast from "react-hot-toast"
-// const { user } = useAuth(); // Assuming your useAuth provides user info
-// const userId = user._id; // Add this at the top of your component
 
 const Menu = () => {
   const [menuItems, setMenuItems] = useState([])
@@ -27,15 +25,10 @@ const Menu = () => {
       try {
         const response = await api.get("/menu")
         setMenuItems(response.data)
-        console.log(response.data)
-
-        // Extract unique categories
         const uniqueCategories = [...new Set(response.data.map((item) => item.category))]
         setCategories(uniqueCategories)
-
         setIsLoading(false)
       } catch (error) {
-        console.error("Error fetching menu:", error)
         toast.error("Failed to load menu items")
         setIsLoading(false)
       }
@@ -51,15 +44,18 @@ const Menu = () => {
       setCart(
         cart.map((cartItem) =>
           cartItem._id === item._id ? { ...cartItem, quantity: cartItem.quantity + 1 } : cartItem,
-        ),
+        )
       )
     } else {
-      setCart([...cart, { 
-        ...item, 
-        quantity: 1,
-        removedIngredients: [],
-        specialRequest: ""
-      }])
+      setCart([
+        ...cart,
+        {
+          ...item,
+          quantity: 1,
+          removedIngredients: [],
+          specialRequest: ""
+        }
+      ])
     }
 
     toast.success(`Added ${item.name} to cart`)
@@ -67,7 +63,7 @@ const Menu = () => {
 
   const addCustomizedToCart = () => {
     if (!customizingItem) return
-    
+
     const customizedItem = {
       ...customizingItem,
       quantity: 1,
@@ -76,11 +72,9 @@ const Menu = () => {
     }
 
     const existingIndex = cart.findIndex(item => item._id === customizedItem._id)
-    
+
     if (existingIndex >= 0) {
-      setCart(cart.map((item, index) => 
-        index === existingIndex ? customizedItem : item
-      ))
+      setCart(cart.map((item, index) => index === existingIndex ? customizedItem : item))
     } else {
       setCart([...cart, customizedItem])
     }
@@ -97,7 +91,6 @@ const Menu = () => {
 
   const updateQuantity = (itemId, newQuantity) => {
     if (newQuantity < 1) return
-
     setCart(cart.map((item) => (item._id === itemId ? { ...item, quantity: newQuantity } : item)))
   }
 
@@ -107,20 +100,19 @@ const Menu = () => {
 
   const placeOrder = async () => {
     if (!isAuthenticated) {
-      toast.error("Please login to place an order");
-      navigate("/login");
-      return;
+      toast.error("Please login to place an order")
+      navigate("/login")
+      return
     }
-  
+
     if (cart.length === 0) {
-      toast.error("Your cart is empty");
-      return;
+      toast.error("Your cart is empty")
+      return
     }
-  
-    setIsPlacingOrder(true);
-  
+
+    setIsPlacingOrder(true)
+
     try {
-      // Prepare order data
       const orderData = {
         items: cart.map((item) => ({
           menuItem: item._id,
@@ -130,24 +122,23 @@ const Menu = () => {
           specialRequest: item.specialRequest || ""
         })),
         total: calculateTotal(),
-      };
-  
-      const response = await api.post("/orders", orderData);
-  
+      }
+
+      const response = await api.post("/orders", orderData)
+
       if (response.data.success) {
-        toast.success("Order placed successfully!");
-        setCart([]);
-        navigate(`/orders/${response.data.orderId}`);
+        toast.success("Order placed successfully!")
+        setCart([])
+        navigate(`/orders/${response.data.orderId}`)
       } else {
-        throw new Error(response.data.message || "Failed to place order");
+        throw new Error(response.data.message || "Failed to place order")
       }
     } catch (error) {
-      console.error("Error placing order:", error);
-      toast.error(error.response?.data?.message || error.message || "Failed to place order");
+      toast.error(error.response?.data?.message || error.message || "Failed to place order")
     } finally {
-      setIsPlacingOrder(false);
+      setIsPlacingOrder(false)
     }
-  };
+  }
 
   const toggleIngredient = (ingredient) => {
     setRemovedIngredients(prev =>
@@ -166,12 +157,11 @@ const Menu = () => {
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 p-4">
-      {/* Customization Modal */}
       {customizingItem && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white p-6 rounded-lg max-w-md w-full">
             <h3 className="text-xl font-bold mb-4">Customize {customizingItem.name}</h3>
-            
+
             <div className="mb-4">
               <label className="block font-medium mb-2">Special Instructions</label>
               <textarea
@@ -195,9 +185,7 @@ const Menu = () => {
                         onChange={() => toggleIngredient(ingredient)}
                         className="mr-2"
                       />
-                      <label htmlFor={`ing-${index}`}>
-                        {ingredient}
-                      </label>
+                      <label htmlFor={`ing-${index}`}>{ingredient}</label>
                     </div>
                   ))}
                 </div>
@@ -205,7 +193,7 @@ const Menu = () => {
             )}
 
             <div className="flex justify-end space-x-2">
-              <button 
+              <button
                 onClick={() => {
                   setCustomizingItem(null)
                   setRemovedIngredients([])
@@ -215,9 +203,9 @@ const Menu = () => {
               >
                 Cancel
               </button>
-              <button 
+              <button
                 onClick={addCustomizedToCart}
-                className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                className="px-4 py-2 bg-orange-600 text-white rounded hover:bg-orange-700"
               >
                 Add to Cart
               </button>
@@ -226,7 +214,6 @@ const Menu = () => {
         </div>
       )}
 
-      {/* Menu Section */}
       <div className="lg:col-span-2">
         <h1 className="text-2xl font-bold mb-6">Our Menu</h1>
 
@@ -234,7 +221,7 @@ const Menu = () => {
           <button
             onClick={() => setSelectedCategory("all")}
             className={`px-4 py-2 rounded-full ${
-              selectedCategory === "all" ? "bg-green-600 text-white" : "bg-gray-100 text-gray-800"
+              selectedCategory === "all" ? "bg-orange-600 text-white" : "bg-gray-100 text-gray-800"
             }`}
           >
             All
@@ -245,7 +232,7 @@ const Menu = () => {
               key={category}
               onClick={() => setSelectedCategory(category)}
               className={`px-4 py-2 rounded-full ${
-                selectedCategory === category ? "bg-green-600 text-white" : "bg-gray-100 text-gray-800"
+                selectedCategory === category ? "bg-orange-600 text-white" : "bg-gray-100 text-gray-800"
               }`}
             >
               {category}
@@ -276,7 +263,7 @@ const Menu = () => {
 
               <h3 className="text-lg font-semibold">{item.name}</h3>
               <p className="text-gray-600 text-sm mb-2 line-clamp-2">{item.description}</p>
-              
+
               {item.ingredients?.length > 0 && (
                 <p className="text-xs text-gray-500 mb-2">
                   Ingredients: {item.ingredients.join(", ")}
@@ -288,23 +275,20 @@ const Menu = () => {
                 <div className="flex gap-2">
                   <button
                     onClick={() => addToCart(item)}
-                    className="bg-green-600 text-white px-3 py-1 rounded-md hover:bg-green-700 transition-colors"
+                    className="bg-orange-600 text-white px-3 py-1 rounded-md hover:bg-orange-700 transition-colors"
                   >
                     Add
                   </button>
-                    <button
-                      onClick={() => {
-                        setCustomizingItem(item)
-                        setRemovedIngredients([])
-                        setSpecialRequest("")
-                      }}
-                      className="flex items-center gap-1 bg-blue-100 text-blue-700 px-3 py-1 rounded-md hover:bg-blue-200 transition-colors"
-                    >
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                      </svg>
-                      Customize
-                    </button>
+                  <button
+                    onClick={() => {
+                      setCustomizingItem(item)
+                      setRemovedIngredients([])
+                      setSpecialRequest("")
+                    }}
+                    className="flex items-center gap-1 bg-orange-100 text-orange-700 px-3 py-1 rounded-md hover:bg-orange-200 transition-colors"
+                  >
+                    Customize
+                  </button>
                 </div>
               </div>
             </div>
@@ -312,7 +296,6 @@ const Menu = () => {
         </div>
       </div>
 
-      {/* Cart Section */}
       <div className="bg-white p-6 rounded-lg shadow-md h-fit sticky top-4">
         <h2 className="text-xl font-bold mb-4">Your Order</h2>
 
@@ -327,7 +310,7 @@ const Menu = () => {
                     <h4 className="font-medium">{item.name}</h4>
                     <span>${(item.price * item.quantity).toFixed(2)}</span>
                   </div>
-                  
+
                   <div className="flex items-center mt-1">
                     <button
                       onClick={() => updateQuantity(item._id, item.quantity - 1)}
@@ -343,21 +326,21 @@ const Menu = () => {
                       +
                     </button>
                   </div>
-                  
+
                   {item.removedIngredients?.length > 0 && (
                     <p className="text-xs text-gray-500 mt-1">
                       Removed: {item.removedIngredients.join(", ")}
                     </p>
                   )}
-                  
+
                   {item.specialRequest && (
                     <p className="text-xs text-gray-500 mt-1">
                       Note: {item.specialRequest}
                     </p>
                   )}
-                  
-                  <button 
-                    onClick={() => removeFromCart(item._id)} 
+
+                  <button
+                    onClick={() => removeFromCart(item._id)}
                     className="text-red-500 text-sm mt-1 hover:text-red-700 transition-colors"
                   >
                     Remove
@@ -375,7 +358,7 @@ const Menu = () => {
               <button
                 onClick={placeOrder}
                 disabled={isPlacingOrder}
-                className="w-full bg-green-600 text-white py-2 rounded-md mt-4 hover:bg-green-700 disabled:bg-green-400 transition-colors"
+                className="w-full bg-orange-600 text-white py-2 rounded-md mt-4 hover:bg-orange-700 disabled:bg-orange-400 transition-colors"
               >
                 {isPlacingOrder ? "Processing..." : "Place Order"}
               </button>
